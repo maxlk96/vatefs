@@ -37,7 +37,7 @@
       </v-btn>
     </div>
 
-    <div v-if="!isEditing" class="strip-content">
+    <div v-if="!isEditing" class="strip-content drag-handle">
       <v-row dense class="ma-0">
         <v-col cols="4" class="strip-field">
           <div class="field-label">ATYP</div>
@@ -331,6 +331,11 @@ const saveEdit = () => {
 
 .strip-content {
   padding: 4px 6px;
+  cursor: grab;
+}
+
+.strip-content:active {
+  cursor: grabbing;
 }
 
 .strip-field {
