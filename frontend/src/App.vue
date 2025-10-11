@@ -42,101 +42,32 @@
 
       <!-- Right side controls -->
       <div class="d-flex align-center ga-2">
-        <!-- Server Connection Status -->
-        <v-tooltip text="Server Connection" location="bottom">
-          <template v-slot:activator="{ props }">
-            <div 
-              v-bind="props"
-              class="connection-indicator"
-              :class="{ 'connected': connectionStatus === 'connected' }"
-            >
-              <v-icon size="small" color="white">mdi-server-network</v-icon>
-            </div>
-          </template>
-        </v-tooltip>
-        
-        <!-- VATSIM Connection Status -->
-        <v-tooltip text="VATSIM Network" location="bottom">
-          <template v-slot:activator="{ props }">
-            <div 
-              v-bind="props"
-              class="connection-indicator"
-              :class="{ 'connected': vatsimConnected }"
-            >
-              <img 
-                src="https://vatsim.dev/img/logo.png" 
-                alt="VATSIM" 
-                class="vatsim-logo"
-              />
-            </div>
-          </template>
-        </v-tooltip>
-
-        <v-btn icon size="small" @click="theme.global.name.value = theme.global.name.value === 'dark' ? 'light' : 'dark'">
-          <v-icon>{{ theme.global.name.value === 'dark' ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
-        </v-btn>
-
-        <v-menu>
-          <template v-slot:activator="{ props }">
-            <v-btn icon size="small" v-bind="props">
-              <v-icon>mdi-plus</v-icon>
-            </v-btn>
-          </template>
-          <v-list>
-            <v-list-item @click="openStripDialog('departure')">
-              <template v-slot:prepend>
-                <v-icon color="yellow-darken-2" size="small">mdi-airplane-takeoff</v-icon>
-              </template>
-              <v-list-item-title>New DEP Strip</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="openStripDialog('arrival')">
-              <template v-slot:prepend>
-                <v-icon color="blue" size="small">mdi-airplane-landing</v-icon>
-              </template>
-              <v-list-item-title>New ARR Strip</v-list-item-title>
-            </v-list-item>
-            <v-list-item @click="openStripDialog('neutral')">
-              <template v-slot:prepend>
-                <v-icon color="grey" size="small">mdi-file-document</v-icon>
-              </template>
-              <v-list-item-title>New General Strip</v-list-item-title>
-            </v-list-item>
-            <v-divider></v-divider>
-            <v-list-item @click="openSpacerDialog">
-              <template v-slot:prepend>
-                <v-icon size="small">mdi-minus</v-icon>
-              </template>
-              <v-list-item-title>New Spacer</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-
-        <!-- Airport Selection Button -->
-        <v-btn 
-          color="white" 
-          variant="elevated"
-          size="small"
-          @click="reopenAirportSelector"
-          class="airport-select-btn"
-        >
-          <v-icon class="mr-1" size="small">mdi-airport</v-icon>
-          {{ selectedAirport ? 'Change Airport' : 'Select Airport' }}
-        </v-btn>
+        <!-- Empty for now - controls moved to sidebar -->
       </div>
     </v-app-bar>
 
-    <v-main>
+    <v-main class="main-with-sidebar">
       <StripBoard 
         ref="stripBoardRef"
         :strips="strips" 
         :spacers="spacers"
-        @update-strip="updateStrip"
         @delete-strip="deleteStrip"
         @move-item="moveItem"
         @add-spacer="handleAddSpacer"
         @delete-spacer="deleteSpacer"
         @strips-reordered="handleStripsReordered"
         @spacers-reordered="handleSpacersReordered"
+      />
+      
+      <!-- Right Sidebar -->
+      <RightSidebar
+        :selected-airport="selectedAirport"
+        :connection-status="connectionStatus"
+        :vatsim-connected="vatsimConnected"
+        @create-strip="openStripDialog"
+        @create-spacer="openSpacerDialog"
+        @delete-item="handleDeleteItem"
+        @change-airport="reopenAirportSelector"
       />
     </v-main>
 
@@ -329,13 +260,11 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useTheme } from 'vuetify'
 import StripBoard from './components/StripBoard.vue'
 import AirportSelector from './components/AirportSelector.vue'
+import RightSidebar from './components/RightSidebar.vue'
 import { socketService } from './services/socket'
 import { vatsimService } from './services/vatsim'
-
-const theme = useTheme()
 const dialog = ref(false)
 const spacerDialog = ref(false)
 const showAirportSelector = ref(true)
@@ -362,10 +291,6 @@ const newStrip = ref({
   rfl: '',
   stripType: 'neutral'
 })
-
-const toggleTheme = () => {
-  theme.global.name.value = theme.global.name.value === 'dark' ? 'light' : 'dark'
-}
 
 const openStripDialog = (type) => {
   dialogStripType.value = type
@@ -404,14 +329,6 @@ const createStrip = () => {
   resetForm()
 }
 
-const updateStrip = (stripData) => {
-  socketService.updateStrip(stripData)
-  const index = strips.value.findIndex(s => s.id === stripData.id)
-  if (index !== -1) {
-    strips.value[index] = { ...strips.value[index], ...stripData }
-  }
-}
-
 const deleteStrip = (stripId) => {
   socketService.deleteStrip(stripId)
 }
@@ -422,6 +339,15 @@ const moveItem = (moveData) => {
 
 const deleteSpacer = (spacerId) => {
   socketService.deleteSpacer(spacerId)
+}
+
+const handleDeleteItem = (item) => {
+  console.log('Deleting item:', item)
+  if (item.type === 'spacer') {
+    deleteSpacer(item.id)
+  } else {
+    deleteStrip(item.id)
+  }
 }
 
 const handleStripsReordered = (reorderedStrips) => {
@@ -616,7 +542,37 @@ onUnmounted(() => {
 })
 </script>
 
+<style>
+/* Global styles - non-scoped */
+* {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Allow text selection in input fields */
+input,
+textarea,
+[contenteditable="true"] {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+}
+</style>
+
 <style scoped>
+.main-with-sidebar {
+  display: flex;
+  height: calc(100vh - 48px);
+}
+
+.main-with-sidebar > :first-child {
+  flex: 1;
+  overflow: hidden;
+}
+
 .airport-name-center {
   position: absolute;
   left: 50%;
@@ -633,29 +589,5 @@ onUnmounted(() => {
   color: white;
 }
 
-.airport-select-btn {
-  margin-left: 8px;
-}
-
-.connection-indicator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  background-color: #d32f2f;
-  transition: background-color 0.3s ease;
-}
-
-.connection-indicator.connected {
-  background-color: #4caf50;
-}
-
-.vatsim-logo {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
 </style>
 

@@ -32,8 +32,6 @@
               <FlightStrip
                 v-else
                 :strip="item"
-                @update="$emit('update-strip', $event)"
-                @delete="$emit('delete-strip', $event)"
               />
             </template>
           </VueDraggable>
@@ -67,7 +65,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update-strip', 'delete-strip', 'move-item', 'add-spacer', 'strips-reordered', 'spacers-reordered'])
+const emit = defineEmits(['delete-strip', 'move-item', 'add-spacer', 'strips-reordered', 'spacers-reordered'])
 
 // Use spacers from props instead of local ref
 
@@ -242,8 +240,8 @@ const getArrivalCount = () => {
 
 <style scoped>
 .strip-board {
-  height: calc(100vh - 48px);
-  background: #2d2d2d;
+  height: 100%;
+  background: #9e9e9e;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -253,7 +251,7 @@ const getArrivalCount = () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: #2d2d2d;
+  background: #9e9e9e;
 }
 
 
@@ -285,7 +283,7 @@ const getArrivalCount = () => {
   flex: 1;
   overflow-y: auto;
   overflow-x: auto;
-  background: #2d2d2d;
+  background: #9e9e9e;
   transition: transform 0.2s ease;
   padding: 8px;
 }
@@ -329,15 +327,15 @@ const getArrivalCount = () => {
 }
 
 .theme--dark .strip-board {
-  background: #1e1e1e;
+  background: #9e9e9e;
 }
 
 .theme--dark .main-panel {
-  background: #1e1e1e;
+  background: #9e9e9e;
 }
 
 .theme--dark .strips-container {
-  background: #1e1e1e;
+  background: #9e9e9e;
 }
 </style>
 

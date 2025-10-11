@@ -1,0 +1,63 @@
+<!-- Standard Flight Strip Template -->
+<!-- This template can be customized to change the look and layout of flight strips -->
+
+<div class="strip-layout">
+  <!-- Header Section -->
+  <div class="strip-header-row">
+    <div class="field-group callsign-group">
+      <span class="field-value callsign">{{callsign}}</span>
+    </div>
+    <div class="field-group frul-chip">
+      <span class="chip chip-{{frul}}">{{frul}}</span>
+    </div>
+  </div>
+
+  <!-- Row 1: Aircraft Info -->
+  <div class="strip-row">
+    <div class="field-group flex-1">
+      <label class="field-label">ATYP</label>
+      <span class="field-value">{{atyp}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <label class="field-label">ASSR</label>
+      <span class="field-value">{{assr || 'N/A'}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <label class="field-label">TAS</label>
+      <span class="field-value">{{tas || 'N/A'}}</span>
+    </div>
+  </div>
+
+  <div class="strip-divider"></div>
+
+  <!-- Row 2: Aerodromes -->
+  <div class="strip-row">
+    <div class="field-group flex-1">
+      <label class="field-label">ADEP</label>
+      <span class="field-value">{{adep}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <label class="field-label">ADES</label>
+      <span class="field-value">{{ades}}</span>
+    </div>
+  </div>
+
+  <div class="strip-divider"></div>
+
+  <!-- Row 3: Route & Level -->
+  <div class="strip-row">
+    <div class="field-group flex-1">
+      <label class="field-label">SID</label>
+      <span class="field-value">{{sid || 'N/A'}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <label class="field-label">RFL</label>
+      <span class="field-value">{{rfl || 'N/A'}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <label class="field-label">EOBT</label>
+      <span class="field-value">{{eobt || 'N/A'}}</span>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,88 @@
+<!-- Arrival Flight Strip Template -->
+<!-- Paper-like appearance with white background and black text -->
+
+<div class="strip-layout paper-strip arrival-layout">
+  <!-- Header Section -->
+  <div class="strip-header-row">
+    <div class="field-group callsign-group">
+      <span class="field-value callsign-large">{{callsign}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{cfl || rfl || 'N/A'}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{frul}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{atyp}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{eta || 'N/A'}}</span>
+    </div>
+  </div>
+
+  <!-- Row 2: Arrival Route -->
+  <div class="strip-row">
+    <div class="field-group flex-2">
+      <span class="field-value">{{star || 'VECTORS'}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{assr || 'N/A'}}</span>
+    </div>
+  </div>
+
+  <!-- Row 3: Airports and Runway -->
+  <div class="strip-row">
+    <div class="field-group flex-1">
+      <span class="field-value">{{adep}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{ades}}</span>
+    </div>
+    <div class="field-group flex-1">
+      <span class="field-value">{{rwy || 'N/A'}}</span>
+    </div>
+  </div>
+</div>
+
+<style>
+.paper-strip {
+  background: transparent !important;
+  color: black !important;
+  font-family: 'Courier New', monospace !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+
+.paper-strip .field-value {
+  color: black !important;
+  font-weight: normal !important;
+}
+
+.paper-strip .callsign-large {
+  font-size: 14px !important;
+  font-weight: bold !important;
+  color: black !important;
+}
+
+.paper-strip .strip-row {
+  border-bottom: 1px solid #ccc !important;
+  padding: 2px 4px !important;
+  min-height: 18px !important;
+}
+
+.paper-strip .strip-header-row {
+  border-bottom: 2px solid #333 !important;
+  padding: 2px 4px !important;
+  min-height: 20px !important;
+}
+
+.paper-strip .field-group {
+  padding: 1px 2px !important;
+}
+
+.paper-strip .strip-divider {
+  display: none !important;
+}
+</style>
+
