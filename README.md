@@ -1,6 +1,6 @@
-# VATEFS - Electronic Flight Strip System
+# VatEFS - VATSIM Electronic Flight Strips
 
-VATEFS (VATSIM Electronic Flight Strip System) is a modern web application for managing electronic flight strips during ATC operations on VATSIM. Inspired by [vatpls](https://github.com/minsulander/vatpls/), it provides real-time synchronization between multiple clients for collaborative ATC operations.
+VatEFS (VATSIM Electronic Flight Strip) is a modern web application for managing electronic flight strips during ATC operations on VATSIM. Inspired by [vatpls](https://github.com/minsulander/vatpls/), it provides real-time synchronization between multiple clients for collaborative ATC operations.
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
 
