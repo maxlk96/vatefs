@@ -5,10 +5,14 @@ import cors from 'cors';
 
 const app = express();
 const httpServer = createServer(app);
+
+// Allow CORS from environment variable or any origin in development
+const corsOrigin = process.env.CORS_ORIGIN || true; // true allows all origins
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"]
+    origin: corsOrigin,
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -306,8 +310,11 @@ app.get('/api/health', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-httpServer.listen(PORT, () => {
-  console.log(`VATEFS Backend running on port ${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all network interfaces
+
+httpServer.listen(PORT, HOST, () => {
+  console.log(`VATEFS Backend running on ${HOST}:${PORT}`);
   console.log(`WebSocket server ready for connections`);
+  console.log(`CORS origin: ${corsOrigin === true ? 'All origins allowed' : corsOrigin}`);
 });
 

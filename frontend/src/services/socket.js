@@ -6,7 +6,11 @@ class SocketService {
   }
 
   connect() {
-    this.socket = io('http://localhost:3000', {
+    // Use environment variable or default to current host with port 3000
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || `${window.location.protocol}//${window.location.hostname}:3000`
+    console.log('Connecting to backend:', backendUrl)
+    
+    this.socket = io(backendUrl, {
       transports: ['websocket'],
       reconnection: true,
       reconnectionDelay: 1000,
