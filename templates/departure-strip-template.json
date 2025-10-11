@@ -1,0 +1,110 @@
+{
+  "name": "Departure Flight Strip Template",
+  "version": "1.0",
+  "description": "Electronic flight strip template optimized for departure operations",
+  "fields": [
+    {
+      "id": "callsign",
+      "label": "CALLSIGN",
+      "type": "text",
+      "required": true,
+      "maxLength": 10,
+      "description": "Aircraft callsign"
+    },
+    {
+      "id": "atyp",
+      "label": "ATYP",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "description": "Aircraft type (ICAO code)"
+    },
+    {
+      "id": "adep",
+      "label": "ADEP",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "pattern": "^[A-Z]{4}$",
+      "description": "Departure aerodrome (ICAO code)"
+    },
+    {
+      "id": "ades",
+      "label": "ADES",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "pattern": "^[A-Z]{4}$",
+      "description": "Destination aerodrome (ICAO code)"
+    },
+    {
+      "id": "assr",
+      "label": "ASSR",
+      "type": "text",
+      "required": false,
+      "maxLength": 4,
+      "pattern": "^[0-7]{4}$",
+      "description": "SSR code (squawk)"
+    },
+    {
+      "id": "sid",
+      "label": "SID",
+      "type": "text",
+      "required": false,
+      "maxLength": 10,
+      "description": "Standard Instrument Departure"
+    },
+    {
+      "id": "rfl",
+      "label": "RFL",
+      "type": "text",
+      "required": false,
+      "maxLength": 5,
+      "description": "Requested Flight Level"
+    },
+    {
+      "id": "rwy",
+      "label": "RWY",
+      "type": "text",
+      "required": false,
+      "maxLength": 3,
+      "description": "Departure runway"
+    },
+    {
+      "id": "eobt",
+      "label": "EOBT",
+      "type": "time",
+      "required": false,
+      "description": "Estimated Off-Block Time"
+    },
+    {
+      "id": "frul",
+      "label": "FRUL",
+      "type": "select",
+      "required": true,
+      "options": ["IFR", "VFR", "SVFR"],
+      "default": "IFR",
+      "description": "Flight rules"
+    },
+    {
+      "id": "wake",
+      "label": "WAKE",
+      "type": "select",
+      "required": false,
+      "options": ["L", "M", "H", "J"],
+      "description": "Wake turbulence category"
+    }
+  ],
+  "layout": {
+    "header": ["callsign", "frul"],
+    "row1": ["atyp", "assr", "wake"],
+    "row2": ["adep", "ades", "rwy"],
+    "row3": ["sid", "rfl", "eobt"]
+  },
+  "colors": {
+    "IFR": "#1976D2",
+    "VFR": "#4CAF50",
+    "SVFR": "#FF9800"
+  }
+}
+

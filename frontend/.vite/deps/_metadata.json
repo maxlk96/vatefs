@@ -1,0 +1,46 @@
+{
+  "hash": "ac38af8a",
+  "configHash": "afb4ad82",
+  "lockfileHash": "d69fe61a",
+  "browserHash": "1f06baee",
+  "optimized": {
+    "vue": {
+      "src": "../../node_modules/vue/dist/vue.runtime.esm-bundler.js",
+      "file": "vue.js",
+      "fileHash": "1b88061d",
+      "needsInterop": false
+    },
+    "vuetify": {
+      "src": "../../node_modules/vuetify/lib/framework.js",
+      "file": "vuetify.js",
+      "fileHash": "d51c845c",
+      "needsInterop": false
+    },
+    "vuetify/components": {
+      "src": "../../node_modules/vuetify/lib/components/index.js",
+      "file": "vuetify_components.js",
+      "fileHash": "89f83bf8",
+      "needsInterop": false
+    },
+    "vuetify/directives": {
+      "src": "../../node_modules/vuetify/lib/directives/index.js",
+      "file": "vuetify_directives.js",
+      "fileHash": "1143cb32",
+      "needsInterop": false
+    }
+  },
+  "chunks": {
+    "chunk-DOEC5G2C": {
+      "file": "chunk-DOEC5G2C.js"
+    },
+    "chunk-PCAKWPJY": {
+      "file": "chunk-PCAKWPJY.js"
+    },
+    "chunk-TSKVXI6Q": {
+      "file": "chunk-TSKVXI6Q.js"
+    },
+    "chunk-ZS4T33C3": {
+      "file": "chunk-ZS4T33C3.js"
+    }
+  }
+}

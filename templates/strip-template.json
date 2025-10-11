@@ -1,0 +1,102 @@
+{
+  "name": "Standard Flight Strip Template",
+  "version": "1.0",
+  "description": "Standard electronic flight strip template for VATSIM ATC operations",
+  "fields": [
+    {
+      "id": "callsign",
+      "label": "CALLSIGN",
+      "type": "text",
+      "required": true,
+      "maxLength": 10,
+      "description": "Aircraft callsign"
+    },
+    {
+      "id": "tas",
+      "label": "TAS",
+      "type": "number",
+      "required": false,
+      "unit": "knots",
+      "description": "True Air Speed in knots"
+    },
+    {
+      "id": "frul",
+      "label": "FRUL",
+      "type": "select",
+      "required": true,
+      "options": ["IFR", "VFR", "SVFR"],
+      "default": "IFR",
+      "description": "Flight rules"
+    },
+    {
+      "id": "atyp",
+      "label": "ATYP",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "description": "Aircraft type (ICAO code)"
+    },
+    {
+      "id": "assr",
+      "label": "ASSR",
+      "type": "text",
+      "required": false,
+      "maxLength": 4,
+      "pattern": "^[0-7]{4}$",
+      "description": "SSR code (squawk)"
+    },
+    {
+      "id": "sid",
+      "label": "SID",
+      "type": "text",
+      "required": false,
+      "maxLength": 10,
+      "description": "Standard Instrument Departure"
+    },
+    {
+      "id": "eobt",
+      "label": "EOBT",
+      "type": "time",
+      "required": false,
+      "description": "Estimated Off-Block Time"
+    },
+    {
+      "id": "adep",
+      "label": "ADEP",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "pattern": "^[A-Z]{4}$",
+      "description": "Departure aerodrome (ICAO code)"
+    },
+    {
+      "id": "ades",
+      "label": "ADES",
+      "type": "text",
+      "required": true,
+      "maxLength": 4,
+      "pattern": "^[A-Z]{4}$",
+      "description": "Destination aerodrome (ICAO code)"
+    },
+    {
+      "id": "rfl",
+      "label": "RFL",
+      "type": "text",
+      "required": false,
+      "maxLength": 5,
+      "description": "Requested Flight Level"
+    }
+  ],
+  "layout": {
+    "header": ["callsign", "frul"],
+    "row1": ["atyp", "assr", "tas"],
+    "row2": ["adep", "ades"],
+    "row3": ["sid", "rfl", "eobt"]
+  },
+  "colors": {
+    "IFR": "#1976D2",
+    "VFR": "#4CAF50",
+    "SVFR": "#FF9800"
+  }
+}
+

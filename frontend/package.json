@@ -1,0 +1,25 @@
+{
+  "name": "vatefs-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "vuetify": "^3.5.10",
+    "vue-draggable-plus": "^0.3.5",
+    "socket.io-client": "^4.7.2",
+    "axios": "^1.6.7",
+    "@mdi/font": "^7.4.47"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "vite": "^5.1.5",
+    "vite-plugin-vuetify": "^2.0.1",
+    "sass": "^1.71.1"
+  }
+}
+
