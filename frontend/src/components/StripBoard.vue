@@ -32,6 +32,7 @@
               <FlightStrip
                 v-else
                 :strip="item"
+                :selected-dep-runway="selectedDepRunway"
                 @update-strip="handleStripUpdate"
               />
             </template>

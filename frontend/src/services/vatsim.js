@@ -75,6 +75,9 @@ class VatsimService {
       check2: '',
       stand: '',
       col3_text: '',
+      numeral: '',
+      numeral2: '',
+      symbol: '',
       stripType: 'departure', // Will be set based on context
       vatsimCid: pilot.cid,
       vatsimCallsign: pilot.callsign

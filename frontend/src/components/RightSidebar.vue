@@ -112,10 +112,9 @@
             <v-btn
               v-bind="props"
               icon
-              color="grey"
               variant="elevated"
               size="large"
-              class="icon-btn mb-2"
+              class="icon-btn mb-2 btn-neutral"
               @click="$emit('create-strip', 'neutral')"
             >
               <v-icon size="large" style="transform: rotate(45deg);">mdi-airplane</v-icon>
@@ -391,6 +390,11 @@ const handleTrashDrop = (event) => {
 
 .btn-freetext {
   background-color: #f44336 !important;
+  color: #fff !important;
+}
+
+.btn-neutral {
+  background-color: #757575 !important;
   color: #fff !important;
 }
 

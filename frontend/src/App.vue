@@ -448,6 +448,9 @@ watch(() => newStrip.value.callsign, (newCallsign) => {
           check2: '',
           stand: '',
           col3_text: '',
+          numeral: '',
+          numeral2: '',
+          symbol: '',
           stripType: newStrip.value.stripType // Keep the dialog type
         }
         vatsimDataLoaded.value = true
@@ -502,6 +505,9 @@ const resetForm = () => {
     check2: '',
     stand: '',
     col3_text: '',
+    numeral: '',
+    numeral2: '',
+    symbol: '',
     stripType: 'neutral'
   }
   vatsimDataLoaded.value = false
@@ -699,8 +705,29 @@ const importExistingFlights = async () => {
       // Check if strip already exists
       const exists = strips.value.find(s => s.callsign === vatsimStrip.callsign)
       if (!exists) {
+        // Match SID if runway is selected
+        let sidToUse = vatsimStrip.sid || ''
+        if (selectedDepRunway.value && vatsimStrip.adep) {
+          if (vatsimStrip.sid) {
+            const matchedSid = sidStarDataService.matchSID(
+              vatsimStrip.adep,
+              selectedDepRunway.value,
+              vatsimStrip.sid
+            )
+            if (matchedSid) sidToUse = matchedSid
+          } else if (vatsimStrip.route) {
+            const matchedSid = sidStarDataService.matchSIDByFirstWaypoint(
+              vatsimStrip.adep,
+              selectedDepRunway.value,
+              vatsimStrip.route
+            )
+            if (matchedSid) sidToUse = matchedSid
+          }
+        }
+        
         const stripData = {
           ...vatsimStrip,
+          sid: sidToUse,
           stripType: 'departure'
         }
         socketService.createStrip(stripData)
@@ -717,8 +744,29 @@ const handleNewVatsimFlight = (vatsimStrip) => {
   // Check if strip already exists
   const exists = strips.value.find(s => s.callsign === vatsimStrip.callsign)
   if (!exists) {
+    // Match SID if runway is selected
+    let sidToUse = vatsimStrip.sid || ''
+    if (selectedDepRunway.value && vatsimStrip.adep) {
+      if (vatsimStrip.sid) {
+        const matchedSid = sidStarDataService.matchSID(
+          vatsimStrip.adep,
+          selectedDepRunway.value,
+          vatsimStrip.sid
+        )
+        if (matchedSid) sidToUse = matchedSid
+      } else if (vatsimStrip.route) {
+        const matchedSid = sidStarDataService.matchSIDByFirstWaypoint(
+          vatsimStrip.adep,
+          selectedDepRunway.value,
+          vatsimStrip.route
+        )
+        if (matchedSid) sidToUse = matchedSid
+      }
+    }
+    
     const stripData = {
       ...vatsimStrip,
+      sid: sidToUse,
       stripType: 'departure'
     }
     socketService.createStrip(stripData)
@@ -935,7 +983,7 @@ textarea,
 }
 
 .dialog-header-neutral {
-  background-color: #424242 !important;
+  background-color: #757575 !important;
   color: #fff !important;
 }
 

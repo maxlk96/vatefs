@@ -44,7 +44,19 @@ class TemplateLoader {
   processTemplate(templateHtml, data) {
     let processed = templateHtml
 
-    // Replace {{variable}} patterns with data values
+    // Replace {{{variable}}} patterns with raw HTML (no escaping)
+    processed = processed.replace(/\{\{\{([^}]+)\}\}\}/g, (match, expression) => {
+      try {
+        expression = expression.trim()
+        const value = this.evaluateExpression(expression, data)
+        return value !== undefined && value !== null ? String(value) : ''
+      } catch (error) {
+        console.warn(`Error processing raw HTML expression: ${expression}`, error)
+        return ''
+      }
+    })
+
+    // Replace {{variable}} patterns with data values (HTML escaped)
     processed = processed.replace(/\{\{([^}]+)\}\}/g, (match, expression) => {
       try {
         // Trim whitespace

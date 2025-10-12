@@ -15,15 +15,20 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch, inject } from 'vue'
 import { templateLoader } from '../services/templateLoader'
 import { socketService } from '../services/socket'
 import { aircraftDataService } from '../services/aircraftData'
+import { sidStarDataService } from '../services/sidstarData'
 
 const props = defineProps({
   strip: {
     type: Object,
     required: true
+  },
+  selectedDepRunway: {
+    type: String,
+    default: ''
   }
 })
 
@@ -34,7 +39,12 @@ const isEditingStand = ref(false)
 const isEditingColumn1 = ref(false)
 const isEditingFreetext = ref(false)
 const isEditingCol3 = ref(false)
+const isEditingSid = ref(false)
+const isEditingNumeral = ref(false)
+const isEditingNumeral2 = ref(false)
 let ataClickTimer = null
+let numeralClickTimer = null
+let numeral2ClickTimer = null
 
 // Store refs to event handlers for cleanup
 const eventHandlers = ref(new Map())
@@ -125,6 +135,14 @@ const formattedStripData = computed(() => {
     }
   }
   
+  // Format symbol for rendering
+  data.symbol_svg = ''
+  if (data.symbol === 'vertical') {
+    data.symbol_svg = '<line x1="10" y1="0" x2="10" y2="20" stroke="#f44336" stroke-width="2"/>'
+  } else if (data.symbol === 'T') {
+    data.symbol_svg = '<line x1="10" y1="0" x2="10" y2="20" stroke="#f44336" stroke-width="2"/><line x1="0" y1="20" x2="20" y2="20" stroke="#f44336" stroke-width="2"/>'
+  }
+  
   return data
 })
 
@@ -201,6 +219,39 @@ const setupClickHandlers = () => {
       col3Element.style.userSelect = 'none'
       col3Element.addEventListener('dblclick', handleCol3DoubleClick)
       eventHandlers.value.set('col3-dblclick', { element: col3Element, event: 'dblclick', fn: handleCol3DoubleClick })
+    }
+    
+    // SID field double-click for manual selection (departure strips)
+    const sidElement = stripElement.querySelector('.edit-sid')
+    if (sidElement) {
+      sidElement.style.userSelect = 'none'
+      sidElement.addEventListener('dblclick', handleSidDoubleClick)
+      eventHandlers.value.set('sid-dblclick', { element: sidElement, event: 'dblclick', fn: handleSidDoubleClick })
+    }
+    
+    // Numeral field click and double-click (general strips)
+    const numeralCell = stripElement.querySelector('.numeral-cell')
+    if (numeralCell) {
+      numeralCell.addEventListener('click', handleNumeralClick)
+      numeralCell.addEventListener('dblclick', handleNumeralDoubleClick)
+      eventHandlers.value.set('numeral-click', { element: numeralCell, event: 'click', fn: handleNumeralClick })
+      eventHandlers.value.set('numeral-dblclick', { element: numeralCell, event: 'dblclick', fn: handleNumeralDoubleClick })
+    }
+    
+    // Symbol field click to toggle (general strips)
+    const symbolCell = stripElement.querySelector('.symbol-cell')
+    if (symbolCell) {
+      symbolCell.addEventListener('click', handleSymbolClick)
+      eventHandlers.value.set('symbol-click', { element: symbolCell, event: 'click', fn: handleSymbolClick })
+    }
+    
+    // Numeral2 field click and double-click (departure strips)
+    const numeral2Cell = stripElement.querySelector('.numeral2-cell')
+    if (numeral2Cell) {
+      numeral2Cell.addEventListener('click', handleNumeral2Click)
+      numeral2Cell.addEventListener('dblclick', handleNumeral2DoubleClick)
+      eventHandlers.value.set('numeral2-click', { element: numeral2Cell, event: 'click', fn: handleNumeral2Click })
+      eventHandlers.value.set('numeral2-dblclick', { element: numeral2Cell, event: 'dblclick', fn: handleNumeral2DoubleClick })
     }
   })
 }
@@ -706,6 +757,7 @@ const handleCol3DoubleClick = (event) => {
       padding: 4px 8px;
       border: 2px solid #757575;
       background: white;
+      color: black;
       outline: none;
       font-size: 16px;
       font-weight: bold;
@@ -756,6 +808,411 @@ const handleCol3DoubleClick = (event) => {
       input.remove()
       col3ValueSpan.style.display = ''
       isEditingCol3.value = false
+    }
+  }
+}
+
+const handleSidDoubleClick = async (event) => {
+  event.stopPropagation()
+  event.preventDefault()
+  
+  if (isEditingSid.value) return
+  
+  isEditingSid.value = true
+  
+  const sidContainer = event.currentTarget
+  const sidValueSpan = sidContainer.querySelector('.sid-large')
+  
+  if (sidValueSpan) {
+    // Get available SIDs for the runway
+    let availableSids = []
+    
+    if (props.strip.adep && props.selectedDepRunway) {
+      const sids = sidStarDataService.getSIDsForRunway(props.strip.adep, props.selectedDepRunway)
+      availableSids = sids.map(s => s.name)
+    }
+    
+    // Create container for input and dropdown
+    const container = document.createElement('div')
+    container.style.cssText = `
+      position: absolute;
+      width: 100%;
+      z-index: 100;
+    `
+    
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.value = props.strip.sid || ''
+    input.maxLength = 10
+    input.placeholder = 'SID'
+    input.className = 'sid-input'
+    input.style.cssText = `
+      width: 90%;
+      padding: 4px 8px;
+      border: 2px solid #2a9af3;
+      background: white;
+      color: black;
+      outline: none;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      font-family: 'Courier New', monospace;
+    `
+    
+    // Create dropdown for available SIDs
+    const dropdown = document.createElement('div')
+    dropdown.className = 'sid-dropdown'
+    dropdown.style.cssText = `
+      position: absolute;
+      top: 100%;
+      left: 5%;
+      width: 90%;
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      border: 2px solid #2a9af3;
+      border-top: none;
+      z-index: 101;
+      display: ${availableSids.length > 0 ? 'block' : 'none'};
+    `
+    
+    // Populate dropdown
+    availableSids.forEach(sidName => {
+      const option = document.createElement('div')
+      option.textContent = sidName
+      option.style.cssText = `
+        padding: 6px 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+      `
+      option.addEventListener('mouseenter', () => {
+        option.style.background = '#e3f2fd'
+      })
+      option.addEventListener('mouseleave', () => {
+        option.style.background = 'white'
+      })
+      option.addEventListener('click', () => {
+        input.value = sidName
+        saveSid(sidName)
+        cleanup()
+      })
+      dropdown.appendChild(option)
+    })
+    
+    container.appendChild(input)
+    container.appendChild(dropdown)
+    
+    // Replace span with container
+    sidValueSpan.style.display = 'none'
+    sidContainer.appendChild(container)
+    input.focus()
+    input.select()
+    
+    // Auto-uppercase and filter dropdown
+    input.addEventListener('input', () => {
+      const value = input.value.toUpperCase()
+      input.value = value
+      
+      // Filter dropdown options
+      if (availableSids.length > 0) {
+        const options = dropdown.querySelectorAll('div')
+        let hasVisible = false
+        options.forEach(option => {
+          const sidName = option.textContent
+          if (sidName.includes(value) || value === '') {
+            option.style.display = 'block'
+            hasVisible = true
+          } else {
+            option.style.display = 'none'
+          }
+        })
+        dropdown.style.display = hasVisible ? 'block' : 'none'
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveSid(input.value)
+        cleanup()
+      } else if (e.key === 'Escape') {
+        cleanup()
+      }
+    })
+    
+    // Handle blur
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        saveSid(input.value)
+        cleanup()
+      }, 150)
+    })
+    
+    const saveSid = (text) => {
+      const updatedStrip = {
+        ...props.strip,
+        sid: text.trim()
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+    }
+    
+    const cleanup = () => {
+      container.remove()
+      sidValueSpan.style.display = ''
+      isEditingSid.value = false
+    }
+  }
+}
+
+const handleNumeralClick = (event) => {
+  event.stopPropagation()
+  
+  if (numeralClickTimer) {
+    return // Double-click is happening
+  }
+  
+  numeralClickTimer = setTimeout(() => {
+    // Single click: clear the numeral value
+    const updatedStrip = {
+      ...props.strip,
+      numeral: ''
+    }
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    numeralClickTimer = null
+  }, 250)
+}
+
+const handleNumeralDoubleClick = (event) => {
+  event.stopPropagation()
+  
+  // Clear the single-click timer
+  if (numeralClickTimer) {
+    clearTimeout(numeralClickTimer)
+    numeralClickTimer = null
+  }
+  
+  if (isEditingNumeral.value) return
+  
+  isEditingNumeral.value = true
+  
+  const numeralCell = event.currentTarget
+  const numeralValueSpan = numeralCell.querySelector('.numeral-value')
+  
+  if (numeralValueSpan) {
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 2
+    input.placeholder = 'xx'
+    input.className = 'numeral-input'
+    input.style.cssText = `
+      width: 25px;
+      text-align: center;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+      color: #f44336;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #f44336;
+      background: white;
+      outline: none;
+      padding: 2px;
+    `
+    
+    // Replace span with input
+    numeralValueSpan.style.display = 'none'
+    numeralCell.appendChild(input)
+    input.focus()
+    
+    // Real-time validation
+    input.addEventListener('input', () => {
+      const value = input.value
+      // Only allow digits, max 2
+      if (!/^\d{0,2}$/.test(value)) {
+        input.value = value.substring(0, value.length - 1)
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = input.value.trim()
+        if (value.length > 0 && /^\d{1,2}$/.test(value)) {
+          const paddedValue = value.padStart(2, '0')
+          saveNumeral(paddedValue)
+        }
+        cleanup()
+      } else if (e.key === 'Escape') {
+        cleanup()
+      }
+    })
+    
+    // Handle blur
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        const value = input.value.trim()
+        if (value.length > 0 && /^\d{1,2}$/.test(value)) {
+          const paddedValue = value.padStart(2, '0')
+          saveNumeral(paddedValue)
+        }
+        cleanup()
+      }, 100)
+    })
+    
+    const saveNumeral = (value) => {
+      const updatedStrip = {
+        ...props.strip,
+        numeral: value
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+    }
+    
+    const cleanup = () => {
+      input.remove()
+      numeralValueSpan.style.display = ''
+      isEditingNumeral.value = false
+    }
+  }
+}
+
+const handleSymbolClick = (event) => {
+  event.stopPropagation()
+  
+  // Toggle between empty → vertical → T → empty
+  const currentSymbol = props.strip.symbol || ''
+  let newSymbol = ''
+  
+  if (currentSymbol === '') {
+    newSymbol = 'vertical'
+  } else if (currentSymbol === 'vertical') {
+    newSymbol = 'T'
+  } else {
+    newSymbol = '' // Back to empty
+  }
+  
+  const updatedStrip = {
+    ...props.strip,
+    symbol: newSymbol
+  }
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handleNumeral2Click = (event) => {
+  event.stopPropagation()
+  
+  if (numeral2ClickTimer) {
+    return // Double-click is happening
+  }
+  
+  numeral2ClickTimer = setTimeout(() => {
+    // Single click: clear the numeral2 value
+    const updatedStrip = {
+      ...props.strip,
+      numeral2: ''
+    }
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    numeral2ClickTimer = null
+  }, 250)
+}
+
+const handleNumeral2DoubleClick = (event) => {
+  event.stopPropagation()
+  
+  // Clear the single-click timer
+  if (numeral2ClickTimer) {
+    clearTimeout(numeral2ClickTimer)
+    numeral2ClickTimer = null
+  }
+  
+  if (isEditingNumeral2.value) return
+  
+  isEditingNumeral2.value = true
+  
+  const numeral2Cell = event.currentTarget
+  const numeral2ValueSpan = numeral2Cell.querySelector('.numeral2-value')
+  
+  if (numeral2ValueSpan) {
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 2
+    input.placeholder = 'xx'
+    input.className = 'numeral2-input'
+    input.style.cssText = `
+      width: 25px;
+      text-align: center;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+      color: #f44336;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #f44336;
+      background: white;
+      outline: none;
+      padding: 2px;
+    `
+    
+    // Replace span with input
+    numeral2ValueSpan.style.display = 'none'
+    numeral2Cell.appendChild(input)
+    input.focus()
+    
+    // Real-time validation
+    input.addEventListener('input', () => {
+      const value = input.value
+      // Only allow digits, max 2
+      if (!/^\d{0,2}$/.test(value)) {
+        input.value = value.substring(0, value.length - 1)
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const value = input.value.trim()
+        if (value.length > 0 && /^\d{1,2}$/.test(value)) {
+          const paddedValue = value.padStart(2, '0')
+          saveNumeral2(paddedValue)
+        }
+        cleanup()
+      } else if (e.key === 'Escape') {
+        cleanup()
+      }
+    })
+    
+    // Handle blur
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        const value = input.value.trim()
+        if (value.length > 0 && /^\d{1,2}$/.test(value)) {
+          const paddedValue = value.padStart(2, '0')
+          saveNumeral2(paddedValue)
+        }
+        cleanup()
+      }, 100)
+    })
+    
+    const saveNumeral2 = (value) => {
+      const updatedStrip = {
+        ...props.strip,
+        numeral2: value
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+    }
+    
+    const cleanup = () => {
+      input.remove()
+      numeral2ValueSpan.style.display = ''
+      isEditingNumeral2.value = false
     }
   }
 }
@@ -827,8 +1284,8 @@ const getStripType = () => {
 }
 
 .strip-neutral {
-  border-left: 8px solid #757575;
-  border-right: 8px solid #757575;
+  border-left: 8px solid #f44336;
+  border-right: 8px solid #f44336;
   border-top: 3px solid #757575;
   border-bottom: 3px solid #757575;
 }
