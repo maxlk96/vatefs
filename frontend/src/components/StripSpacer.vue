@@ -1,40 +1,12 @@
 <template>
   <div 
     class="strip-spacer" 
-    :class="{ 'spacer-editing': isEditing }"
     :data-strip-id="spacer.id"
   >
-    <div class="spacer-content drag-handle">
+    <div class="spacer-content drag-handle" @dblclick="startEditing">
       <div class="spacer-text-wrapper">
-        <span class="spacer-name">{{ spacer.name }}</span>
+        <span class="spacer-name" ref="spacerNameSpan">{{ spacer.name }}</span>
       </div>
-      <v-btn 
-        icon 
-        size="small" 
-        class="delete-spacer-btn"
-        @click="$emit('delete', spacer.id)"
-      >
-        <v-icon size="small" color="black">mdi-close</v-icon>
-      </v-btn>
-    </div>
-    
-    <div v-if="isEditing" class="spacer-edit pa-2">
-      <v-text-field
-        v-model="editData.name"
-        label="Section Name"
-        density="compact"
-        variant="outlined"
-        hide-details
-        class="mb-2"
-      ></v-text-field>
-      <v-btn 
-        color="primary" 
-        size="small" 
-        block
-        @click="saveEdit"
-      >
-        Save
-      </v-btn>
     </div>
   </div>
 </template>
@@ -53,14 +25,88 @@ const emit = defineEmits(['update', 'delete'])
 
 const isEditing = ref(false)
 const editData = ref({})
+const spacerNameSpan = ref(null)
 
 watch(() => props.spacer, (newSpacer) => {
   editData.value = { ...newSpacer }
 }, { immediate: true, deep: true })
 
-const saveEdit = () => {
-  emit('update', editData.value)
-  isEditing.value = false
+const startEditing = (event) => {
+  event.stopPropagation()
+  
+  if (isEditing.value) return
+  isEditing.value = true
+  
+  // Create input overlay
+  const spacerElement = event.currentTarget.closest('.strip-spacer')
+  if (!spacerElement) return
+  
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.value = props.spacer.name
+  input.className = 'spacer-name-input'
+  input.style.cssText = `
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 400px;
+    padding: 8px 12px;
+    border: 3px solid #fff;
+    background: #2d2d2d;
+    color: #fff;
+    outline: none;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-align: center;
+    font-family: 'Arial', 'Helvetica', sans-serif;
+    z-index: 100;
+  `
+  
+  // Hide the span
+  const nameSpan = spacerElement.querySelector('.spacer-name')
+  if (nameSpan) {
+    nameSpan.style.visibility = 'hidden'
+  }
+  
+  spacerElement.appendChild(input)
+  input.focus()
+  input.select()
+  
+  // Handle Enter key
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const newName = input.value.trim()
+      if (newName) {
+        emit('update', { ...props.spacer, name: newName })
+      }
+      cleanup()
+    } else if (e.key === 'Escape') {
+      cleanup()
+    }
+  })
+  
+  // Handle blur
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      const newName = input.value.trim()
+      if (newName) {
+        emit('update', { ...props.spacer, name: newName })
+      }
+      cleanup()
+    }, 100)
+  })
+  
+  const cleanup = () => {
+    input.remove()
+    if (nameSpan) {
+      nameSpan.style.visibility = 'visible'
+    }
+    isEditing.value = false
+  }
 }
 </script>
 
@@ -86,9 +132,6 @@ const saveEdit = () => {
   cursor: grabbing;
 }
 
-.spacer-editing {
-  background: #FF9800;
-}
 
 .spacer-content {
   display: flex;
@@ -98,6 +141,12 @@ const saveEdit = () => {
   cursor: grab;
   height: 100%;
   position: relative;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.spacer-content:hover {
+  background: #353535;
 }
 
 .spacer-content:active {
@@ -122,32 +171,12 @@ const saveEdit = () => {
   user-select: none;
 }
 
-.delete-spacer-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #ffffff !important;
-  width: 28px;
-  height: 28px;
-}
-
-.delete-spacer-btn:hover {
-  background: #f0f0f0 !important;
-}
-
 .drag-handle {
   cursor: grab;
 }
 
 .drag-handle:active {
   cursor: grabbing;
-}
-
-.spacer-edit {
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 4px;
 }
 
 .theme--dark .strip-spacer {

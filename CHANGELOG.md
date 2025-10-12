@@ -27,8 +27,9 @@ All notable changes to VATEFS will be documented in this file.
 - **Removed strip headers** - Callsign now only appears within the template content
 - **Removed edit functionality** - Strips are now view-only (edit will return in future release)
 - **Removed edit and delete buttons** - Strips now have cleaner appearance without action buttons
-- **Enhanced borders** - Strip type borders (yellow/blue/gray) now show on all four sides instead of just left
-- **Removed dark/light mode toggle** - App now uses consistent dark theme
+- **Enhanced borders** - Strip type borders show on all four sides (8px left/right, 3px top/bottom)
+- **Paper-like styling** - Light grey strip backgrounds (#e8e8e8) on medium grey layout (#9e9e9e)
+- **Removed dark/light mode toggle** - App now uses consistent grey theme
 - **Sidebar redesign** - Airport selection and status indicators moved to sidebar
 - **Icon-only buttons** - Creation buttons now show only icons with tooltips (no text)
 - **Rectangular button design** - Buttons are now rectangular with rounded corners instead of circular
@@ -39,6 +40,18 @@ All notable changes to VATEFS will be documented in this file.
 - **Improved trash zone** - Icon changes from outline to solid red when dragging over
 - **WAN Access enabled** - Frontend and backend now listen on all network interfaces
 - **Non-selectable text** - All UI text is now non-selectable for better drag-and-drop experience (input fields still allow text selection)
+- **Runway selector layout** - Two-column grid layout (DEP left, ARR right) with color-coded backgrounds
+- **Color-coded runways** - DEP runway selector has yellow background, ARR runway has blue background
+- **Simplified clock** - Removed "ZULU" label and made clock larger with full-height display
+- **Unified color scheme** - Standardized departure (#fdd835) and arrival (#2a9af3) colors across all UI elements
+- **Runway indicator** - Airport info bar shows selected runways (DEP/ARR) with color coding
+- **Smart runway display** - Shows single runway in white when DEP=ARR, or both with colors when different
+- **Matched runway text size** - Runway numbers now same size as "RWY:" label
+- **Dark theme** - Top toolbar and airport info bar now use dark grey (#1e1e1e) matching sidebar
+- **Equal sidebar spacing** - All sidebar elements now have consistent 8px spacing between them
+- **Color-coded dialog headers** - Departure dialogs have yellow headers, arrival have blue, general/airport/spacer have dark grey
+- **Auto-capitalization** - All strip fields display in uppercase; input fields auto-capitalize as you type
+- **White airport button** - Airport selector button now has white background with black text for better visibility
 - Strip content is now rendered from HTML templates instead of Vue template
 - Templates are fully customizable without modifying source code
 - Strip layouts can be changed by editing HTML files in `frontend/public/templates/`

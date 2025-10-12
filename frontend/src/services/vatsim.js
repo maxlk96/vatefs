@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { aircraftDataService } from './aircraftData'
 
 class VatsimService {
   constructor() {
@@ -48,18 +49,32 @@ class VatsimService {
 
   convertToStrip(pilot) {
     const fp = pilot.flight_plan
+    const aircraftType = fp.aircraft_short || fp.aircraft || 'ZZZZ'
+    
+    // Get WTC from aircraft data
+    const wtc = aircraftDataService.getWTC(aircraftType)
+    
+    // Get full route
+    const route = fp.route || ''
     
     return {
       callsign: pilot.callsign,
-      atyp: fp.aircraft_short || fp.aircraft || 'ZZZZ',
+      atyp: aircraftType,
+      wake: wtc,
       adep: fp.departure,
       ades: fp.arrival,
       rfl: fp.altitude ? `FL${Math.floor(parseInt(fp.altitude) / 100).toString().padStart(3, '0')}` : '',
       tas: fp.cruise_tas || '',
       frul: fp.flight_rules || 'IFR',
       sid: fp.departure_procedure || '',
+      star: fp.arrival_procedure || '',
       assr: pilot.transponder || '',
       eobt: fp.deptime || '',
+      route: route,
+      check1: '',
+      check2: '',
+      stand: '',
+      col3_text: '',
       stripType: 'departure', // Will be set based on context
       vatsimCid: pilot.cid,
       vatsimCallsign: pilot.callsign
@@ -124,6 +139,20 @@ class VatsimService {
       controllers: controllers.length,
       activeControllers: controllers
     }
+  }
+
+  async getFlightByCallsign(callsign) {
+    const data = await this.fetchData()
+    if (!data || !data.pilots) return null
+
+    // Find pilot with matching callsign (case-insensitive)
+    const pilot = data.pilots.find(p => 
+      p.callsign.toUpperCase() === callsign.toUpperCase()
+    )
+
+    if (!pilot || !pilot.flight_plan) return null
+
+    return this.convertToStrip(pilot)
   }
 }
 

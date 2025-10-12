@@ -78,6 +78,12 @@ class SocketService {
     }
   }
 
+  updateSpacer(spacerData) {
+    if (this.socket) {
+      this.socket.emit('update-spacer', spacerData)
+    }
+  }
+
   deleteSpacer(spacerId) {
     if (this.socket) {
       this.socket.emit('delete-spacer', spacerId)

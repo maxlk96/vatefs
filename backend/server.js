@@ -79,18 +79,105 @@ io.on('connection', (socket) => {
     if (!client.airport) return;
     
     const room = getAirportRoom(client.airport);
-    const newStrip = {
-      id: stripIdCounter++,
-      ...stripData,
-      position: stripData.position || { order: room.strips.length },
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    room.strips.push(newStrip);
     
-    console.log(`Strip created in ${client.airport}, broadcasting reorder:`, room.strips.length);
+    // Check for duplicate callsign
+    const existingIndex = room.strips.findIndex(s => 
+      s.callsign && stripData.callsign && 
+      s.callsign.toUpperCase() === stripData.callsign.toUpperCase()
+    );
+    
+    if (existingIndex !== -1) {
+      // Overwrite existing strip
+      console.log(`Strip ${stripData.callsign} already exists, overwriting`);
+      room.strips[existingIndex] = {
+        ...room.strips[existingIndex],
+        ...stripData,
+        id: room.strips[existingIndex].id, // Keep original ID
+        updatedAt: new Date()
+      };
+    } else {
+      // Create new strip with position based on type
+      let position;
+      if (stripData.stripType === 'arrival') {
+        // Arrivals go to the absolute top (order 0, above all spacers)
+        position = { order: 0 };
+        // Increment all existing strips' positions
+        room.strips.forEach(s => {
+          if (s.position && s.position.order !== undefined) {
+            s.position.order++;
+          }
+        });
+        // Increment all spacers' positions
+        room.spacers.forEach(sp => {
+          if (sp.order !== undefined) {
+            sp.order++;
+          }
+        });
+      } else if (stripData.stripType === 'departure') {
+        // Departures go to the bottom, sorted by EOBT
+        // Find the highest order value among strips and spacers
+        const maxStripOrder = room.strips.length > 0 ? 
+          Math.max(...room.strips.map(s => s.position?.order || 0)) : -1;
+        const maxSpacerOrder = room.spacers.length > 0 ? 
+          Math.max(...room.spacers.map(sp => sp.order || 0)) : -1;
+        const maxOrder = Math.max(maxStripOrder, maxSpacerOrder);
+        
+        position = { order: maxOrder + 1 };
+      } else {
+        // Neutral and freetext strips go to the bottom
+        const maxStripOrder = room.strips.length > 0 ? 
+          Math.max(...room.strips.map(s => s.position?.order || 0)) : -1;
+        const maxSpacerOrder = room.spacers.length > 0 ? 
+          Math.max(...room.spacers.map(sp => sp.order || 0)) : -1;
+        const maxOrder = Math.max(maxStripOrder, maxSpacerOrder);
+        
+        position = { order: maxOrder + 1 };
+      }
+      
+      const newStrip = {
+        id: stripIdCounter++,
+        ...stripData,
+        position: position,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      room.strips.push(newStrip);
+      
+      // For departures, sort by EOBT (earliest at top of departure section)
+      if (stripData.stripType === 'departure') {
+        // Get all departure strips
+        const depStrips = room.strips.filter(s => s.stripType === 'departure');
+        
+        // Sort by EOBT (earliest first for top position)
+        depStrips.sort((a, b) => {
+          const eobtA = a.eobt || '9999';
+          const eobtB = b.eobt || '9999';
+          return eobtA.localeCompare(eobtB); // Earliest EOBT gets lowest order
+        });
+        
+        // Reassign positions to sorted departure strips
+        const maxStripOrder = room.strips.length > 0 ? 
+          Math.max(...room.strips.map(s => s.position?.order || 0)) : -1;
+        const maxSpacerOrder = room.spacers.length > 0 ? 
+          Math.max(...room.spacers.map(sp => sp.order || 0)) : -1;
+        let baseOrder = Math.max(maxStripOrder, maxSpacerOrder) - depStrips.length + 1;
+        
+        depStrips.forEach((strip, index) => {
+          strip.position.order = baseOrder + index;
+        });
+      }
+      
+      // Sort strips by position order
+      room.strips.sort((a, b) => (a.position?.order || 0) - (b.position?.order || 0));
+    }
+    
+    console.log(`Strip created/updated in ${client.airport}, broadcasting reorder:`, room.strips.length);
     // Broadcast to all clients in this airport room
     io.to(client.airport).emit('strips-reordered', room.strips);
+    // Also broadcast spacers if their positions were updated (for arrivals)
+    if (stripData.stripType === 'arrival') {
+      io.to(client.airport).emit('spacers-reordered', room.spacers);
+    }
   });
 
   // Handle strip updates
@@ -197,6 +284,24 @@ io.on('connection', (socket) => {
   });
 
   // Handle spacer deletion
+  // Handle spacer updates
+  socket.on('update-spacer', (spacerData) => {
+    const client = clients.get(socket.id);
+    if (!client.airport) return;
+    
+    const room = getAirportRoom(client.airport);
+    const index = room.spacers.findIndex(s => s.id === spacerData.id);
+    if (index !== -1) {
+      room.spacers[index] = {
+        ...room.spacers[index],
+        ...spacerData
+      };
+      
+      // Broadcast to all clients in this airport room
+      io.to(client.airport).emit('spacers-reordered', room.spacers);
+    }
+  });
+
   socket.on('delete-spacer', (spacerId) => {
     const client = clients.get(socket.id);
     if (!client.airport) return;

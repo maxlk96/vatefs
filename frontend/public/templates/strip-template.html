@@ -1,87 +1,347 @@
 <!-- Standard Flight Strip Template -->
-<!-- Paper-like appearance with white background and black text -->
+<!-- 7-column layout: cols 2&3 span full height, others split in middle -->
 
-<div class="strip-layout paper-strip">
-  <!-- Header Section -->
-  <div class="strip-header-row">
-    <div class="field-group callsign-group">
+<div class="strip-layout paper-strip standard-layout">
+  <div class="strip-container">
+    <!-- Column 1: No rows, just positioned text -->
+    <div class="column column-full column-no-rows edit-column" data-field="column1">
       <span class="field-value callsign-large">{{callsign}}</span>
+      <div class="field-spacing-group">
+        <span class="field-value field-right field-placeholder">&nbsp;</span>
+        <div class="field-middle-group">
+          <span class="field-value field-left">{{frul}}</span>
+          <span class="field-value">{{atyp}}<span class="wtc-badge">{{wake}}</span></span>
+        </div>
+        <span class="field-value field-right">{{assr}}</span>
+      </div>
     </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{rfl || 'N/A'}}</span>
+    
+    <!-- Column 2: Split -->
+    <div class="column column-split">
+      <div class="cell cell-top">
+        <span class="field-value">{{eobt || eta}}</span>
+      </div>
+      <div class="cell cell-bottom ata-cell" data-field="ata">
+        <span class="field-value ata-value">{{ata}}</span>
+      </div>
     </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{frul}}</span>
+    
+    <!-- Column 3: Editable field -->
+    <div class="column column-full column-sid edit-col3" data-field="column3">
+      <span class="field-value sid-large">{{col3_text}}</span>
     </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{atyp}}</span>
+    
+    <!-- Column 4: Split -->
+    <div class="column column-split column-no-right-border">
+      <div class="cell cell-top cell-with-right-border check-cell" data-field="check1">
+        <span class="field-value check-value">{{check1}}</span>
+      </div>
+      <div class="cell cell-bottom">
+        <span class="field-value">{{adep}}</span>
+      </div>
     </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{eta || 'N/A'}}</span>
+    
+    <!-- Column 5: Split -->
+    <div class="column column-split">
+      <div class="cell cell-top check-cell" data-field="check2">
+        <span class="field-value check-value">{{check2}}</span>
+      </div>
+      <div class="cell cell-bottom">
+        <span class="field-value">{{ades}}</span>
+      </div>
     </div>
-  </div>
-
-  <!-- Row 2: Route and Procedures -->
-  <div class="strip-row">
-    <div class="field-group flex-2">
-      <span class="field-value">{{sid || 'DCT'}} {{star || ''}}</span>
+    
+    <!-- Column 6: Split -->
+    <div class="column column-split column-no-right-border">
+      <div class="cell cell-top cell-with-right-border">
+        <span class="field-value">{{rwy}}</span>
+      </div>
+      <div class="cell cell-bottom route-cell">
+        <span class="field-value route-text">{{route || ''}}</span>
+      </div>
     </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{assr || 'N/A'}}</span>
-    </div>
-  </div>
-
-  <!-- Row 3: Airports -->
-  <div class="strip-row">
-    <div class="field-group flex-1">
-      <span class="field-value">{{adep}}</span>
-    </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{ades}}</span>
-    </div>
-    <div class="field-group flex-1">
-      <span class="field-value">{{eobt || 'N/A'}}</span>
+    
+    <!-- Column 7: Stand area (full height, no EOBT) -->
+    <div class="column column-full">
+      <div class="cell cell-full stand-cell" data-field="stand">
+        <span class="field-value stand-value">{{stand}}</span>
+      </div>
     </div>
   </div>
 </div>
 
 <style>
-.paper-strip {
+.standard-layout.paper-strip {
   background: transparent !important;
   color: black !important;
   font-family: 'Courier New', monospace !important;
   font-size: 12px !important;
   line-height: 1.2 !important;
+  width: 100% !important;
+  height: 60px !important;
 }
 
-.paper-strip .field-value {
+.standard-layout.paper-strip .strip-container {
+  display: flex !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.standard-layout.paper-strip .column {
+  border-right: 1px solid #333 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.standard-layout.paper-strip .column:last-child {
+  border-right: none !important;
+}
+
+.standard-layout.paper-strip .column-no-right-border {
+  border-right: none !important;
+}
+
+.standard-layout.paper-strip .column-split {
+  flex: 1 !important;
+}
+
+.standard-layout.paper-strip .column-full {
+  flex: 1.5 !important;
+}
+
+.standard-layout.paper-strip .cell-no-right-border {
+  border-right: none !important;
+}
+
+.standard-layout.paper-strip .cell-with-right-border {
+  border-right: 1px solid #333 !important;
+}
+
+.standard-layout.paper-strip .cell {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 2px 4px !important;
+  border-bottom: 1px solid #333 !important;
+  text-align: center !important;
+}
+
+.standard-layout.paper-strip .cell:last-child {
+  border-bottom: none !important;
+}
+
+.standard-layout.paper-strip .cell-full {
+  height: 100% !important;
+  border-bottom: none !important;
+}
+
+.standard-layout.paper-strip .cell-top {
+  flex: 1 !important;
+}
+
+.standard-layout.paper-strip .cell-bottom {
+  flex: 1 !important;
+}
+
+.standard-layout.paper-strip .column-no-rows {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 3px 4px !important;
+  border-bottom: none !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.standard-layout.paper-strip .edit-column {
+  cursor: pointer !important;
+  transition: background 0.1s !important;
+  user-select: none !important;
+}
+
+.standard-layout.paper-strip .edit-column:hover {
+  background: rgba(33, 150, 243, 0.03) !important;
+}
+
+.standard-layout.paper-strip .column-no-rows .callsign-large {
+  align-self: center !important;
+  margin-bottom: 3px !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+}
+
+.standard-layout.paper-strip .field-spacing-group {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-evenly !important;
+  align-items: stretch !important;
+  flex: 1 !important;
+  width: 100% !important;
+}
+
+.standard-layout.paper-strip .field-spacing-group > * {
+  flex-shrink: 0 !important;
+}
+
+.standard-layout.paper-strip .field-middle-group {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  width: 100% !important;
+}
+
+.standard-layout.paper-strip .field-placeholder {
+  visibility: hidden !important;
+}
+
+.standard-layout.paper-strip .field-left {
+  margin-right: auto !important;
+}
+
+.standard-layout.paper-strip .field-right {
+  align-self: flex-end !important;
+}
+
+.standard-layout.paper-strip .field-value {
   color: black !important;
   font-weight: normal !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
 }
 
-.paper-strip .callsign-large {
-  font-size: 14px !important;
+.standard-layout.paper-strip .callsign-large {
+  font-size: 16px !important;
   font-weight: bold !important;
+  color: black !important;
+  text-transform: uppercase !important;
+}
+
+.standard-layout.paper-strip .cell-no-bottom-border {
+  border-bottom: none !important;
+}
+
+.standard-layout.paper-strip .column-no-border .cell {
+  border-bottom: none !important;
+}
+
+.standard-layout.paper-strip .stand-cell {
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  overflow: visible !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.standard-layout.paper-strip .stand-cell:hover {
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.standard-layout.paper-strip .stand-value {
+  font-family: 'Brush Script MT', 'Segoe Script', 'Comic Sans MS', cursive !important;
+  color: #000 !important;
+  font-size: 32px !important;
+  font-weight: bold !important;
+  letter-spacing: 1px !important;
+  font-style: italic !important;
+  display: inline-block !important;
+  white-space: nowrap !important;
+  overflow: visible !important;
+}
+
+.standard-layout.paper-strip .ata-cell {
+  cursor: pointer !important;
+  background: transparent !important;
+  transition: background 0.2s !important;
+}
+
+.standard-layout.paper-strip .ata-cell:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.standard-layout.paper-strip .ata-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
+  display: inline-block !important;
+}
+
+.standard-layout.paper-strip .check-cell {
+  cursor: pointer !important;
+  background: transparent !important;
+  transition: background 0.2s !important;
+}
+
+.standard-layout.paper-strip .check-cell:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.standard-layout.paper-strip .check-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  display: inline-block !important;
+}
+
+.standard-layout.paper-strip .route-cell {
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  padding: 2px 4px !important;
+  position: relative !important;
+}
+
+.standard-layout.paper-strip .route-text {
+  position: absolute !important;
+  left: 4px !important;
+  top: calc(50% - 5px) !important;
+  transform: translateY(-50%) !important;
+  font-size: 9px !important;
+  line-height: 1.1 !important;
+  max-width: 105px !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  background: transparent !important;
+  z-index: 2 !important;
+}
+
+.standard-layout.paper-strip .edit-col3 {
+  cursor: pointer !important;
+  transition: background 0.1s !important;
+  user-select: none !important;
+}
+
+.standard-layout.paper-strip .edit-col3:hover {
+  background: rgba(117, 117, 117, 0.05) !important;
+}
+
+.standard-layout.paper-strip .wtc-badge {
+  font-size: 10px !important;
+  font-weight: bold !important;
+  margin-left: 2px !important;
   color: black !important;
 }
 
-.paper-strip .strip-row {
-  border-bottom: 1px solid #ccc !important;
-  padding: 2px 4px !important;
-  min-height: 18px !important;
+.standard-layout.paper-strip .column-sid {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  padding: 4px !important;
 }
 
-.paper-strip .strip-header-row {
-  border-bottom: 2px solid #333 !important;
-  padding: 2px 4px !important;
-  min-height: 20px !important;
+.standard-layout.paper-strip .sid-large {
+  font-size: 16px !important;
+  font-weight: bold !important;
+  color: black !important;
+  text-transform: uppercase !important;
 }
 
-.paper-strip .field-group {
-  padding: 1px 2px !important;
-}
-
-.paper-strip .strip-divider {
+.standard-layout.paper-strip .strip-divider {
   display: none !important;
 }
 </style>

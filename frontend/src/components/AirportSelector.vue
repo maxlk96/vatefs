@@ -1,7 +1,7 @@
 <template>
   <v-dialog v-model="show" max-width="600" :persistent="!hasSelectedAirport">
     <v-card>
-      <v-card-title class="bg-primary">
+      <v-card-title class="dialog-header-neutral">
         <v-icon class="mr-2">mdi-airport</v-icon>
         <span class="text-h5">{{ hasSelectedAirport ? 'Change Airport' : 'Select Airport' }}</span>
       </v-card-title>
@@ -241,6 +241,11 @@ onMounted(async () => {
 
 .theme--dark .selected-card {
   background: rgba(25, 118, 210, 0.15);
+}
+
+.dialog-header-neutral {
+  background-color: #424242 !important;
+  color: #fff !important;
 }
 </style>
 

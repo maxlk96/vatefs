@@ -152,7 +152,7 @@ class TemplateLoader {
 
   /**
    * Get template name based on strip type
-   * @param {string} stripType - Type of strip (departure, arrival, neutral)
+   * @param {string} stripType - Type of strip (departure, arrival, neutral, freetext)
    * @returns {string} Template filename
    */
   getTemplateForType(stripType) {
@@ -161,6 +161,8 @@ class TemplateLoader {
         return 'departure-strip-template'
       case 'arrival':
         return 'arrival-strip-template'
+      case 'freetext':
+        return 'freetext-strip-template'
       default:
         return 'strip-template'
     }

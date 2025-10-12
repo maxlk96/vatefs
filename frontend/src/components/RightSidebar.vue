@@ -5,14 +5,39 @@
       <div class="button-container">
         <!-- Airport Button -->
         <v-btn
-          color="primary"
+          color="white"
           variant="elevated"
-          class="mb-3 airport-btn"
+          class="airport-btn"
           @click="$emit('change-airport')"
         >
           <v-icon class="mr-1" size="small">mdi-airport</v-icon>
           <span class="airport-text">{{ selectedAirport || 'Airport' }}</span>
         </v-btn>
+        
+        <!-- Runway Selectors -->
+        <div class="runway-selectors" v-if="availableRunways.length > 0">
+          <v-select
+            :model-value="selectedDepRunway"
+            :items="availableRunways"
+            placeholder="DEP"
+            variant="outlined"
+            density="compact"
+            class="runway-select runway-dep"
+            hide-details
+            @update:model-value="$emit('update-dep-runway', $event)"
+          ></v-select>
+          
+          <v-select
+            :model-value="selectedArrRunway"
+            :items="availableRunways"
+            placeholder="ARR"
+            variant="outlined"
+            density="compact"
+            class="runway-select runway-arr"
+            hide-details
+            @update:model-value="$emit('update-arr-runway', $event)"
+          ></v-select>
+        </div>
 
         <!-- Status Indicators -->
         <div class="status-indicators">
@@ -47,7 +72,7 @@
       </div>
     </div>
 
-    <v-divider class="my-3"></v-divider>
+    <v-divider class="my-2"></v-divider>
 
     <!-- Creation Buttons -->
     <div class="sidebar-section">
@@ -57,10 +82,9 @@
             <v-btn
               v-bind="props"
               icon
-              color="yellow-darken-2"
               variant="elevated"
               size="large"
-              class="icon-btn mb-2"
+              class="icon-btn mb-2 btn-departure"
               @click="$emit('create-strip', 'departure')"
             >
               <v-icon size="large">mdi-airplane-takeoff</v-icon>
@@ -73,10 +97,9 @@
             <v-btn
               v-bind="props"
               icon
-              color="blue"
               variant="elevated"
               size="large"
-              class="icon-btn mb-2"
+              class="icon-btn mb-2 btn-arrival"
               @click="$emit('create-strip', 'arrival')"
             >
               <v-icon size="large">mdi-airplane-landing</v-icon>
@@ -95,7 +118,22 @@
               class="icon-btn mb-2"
               @click="$emit('create-strip', 'neutral')"
             >
-              <v-icon size="large">mdi-file-document</v-icon>
+              <v-icon size="large" style="transform: rotate(45deg);">mdi-airplane</v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="Freetext Strip" location="left">
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon
+              variant="elevated"
+              size="large"
+              class="icon-btn mb-2 btn-freetext"
+              @click="$emit('create-strip', 'freetext')"
+            >
+              <v-icon size="large">mdi-text-box</v-icon>
             </v-btn>
           </template>
         </v-tooltip>
@@ -167,10 +205,22 @@ const props = defineProps({
   vatsimConnected: {
     type: Boolean,
     default: false
+  },
+  selectedDepRunway: {
+    type: String,
+    default: ''
+  },
+  selectedArrRunway: {
+    type: String,
+    default: ''
+  },
+  availableRunways: {
+    type: Array,
+    default: () => []
   }
 })
 
-const emit = defineEmits(['create-strip', 'create-spacer', 'delete-item', 'change-airport'])
+const emit = defineEmits(['create-strip', 'create-spacer', 'delete-item', 'change-airport', 'update-dep-runway', 'update-arr-runway'])
 
 const trashItems = ref([])
 const isDraggingOver = ref(false)
@@ -229,7 +279,7 @@ const handleTrashDrop = (event) => {
 }
 
 .sidebar-section {
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .airport-btn {
@@ -239,12 +289,15 @@ const handleTrashDrop = (event) => {
   width: 96px !important;
   height: auto !important;
   white-space: nowrap;
+  margin-bottom: 8px !important;
+  color: #000 !important;
 }
 
 .airport-text {
   font-size: 0.9em;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #000 !important;
 }
 
 .status-indicators {
@@ -282,10 +335,63 @@ const handleTrashDrop = (event) => {
   width: 100%;
 }
 
+.runway-selectors {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.runway-select {
+  font-size: 0.7rem !important;
+}
+
+.runway-dep :deep(.v-field) {
+  background-color: #2a9af3 !important;
+}
+
+.runway-dep :deep(.v-field__input) {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.runway-arr :deep(.v-field) {
+  background-color: #fdd835 !important;
+}
+
+.runway-arr :deep(.v-field__input) {
+  color: #000 !important;
+  font-weight: 600 !important;
+}
+
+.runway-select :deep(.v-field__input) {
+  font-size: 0.7rem !important;
+  padding: 4px 6px !important;
+  min-height: 28px !important;
+  text-align: center !important;
+}
+
 .icon-btn {
   height: 48px !important;
   width: 80px !important;
   border-radius: 8px !important;
+}
+
+.btn-departure {
+  background-color: #2a9af3 !important;
+  color: #fff !important;
+}
+
+.btn-arrival {
+  background-color: #fdd835 !important;
+  color: #000 !important;
+}
+
+.btn-freetext {
+  background-color: #f44336 !important;
+  color: #fff !important;
 }
 
 .trash-zone-wrapper {

@@ -5,7 +5,7 @@
       <!-- Airport Info Bar -->
       <div class="airport-info-bar">
         <div class="airport-info">
-          <span class="runway-info">RWY: 1</span>
+          <span class="runway-info">RWY: <span v-html="getRunwayDisplay()"></span></span>
           <span class="traffic-info">DEP {{ getDepartureCount() }} ARR {{ getArrivalCount() }}</span>
         </div>
       </div>
@@ -32,6 +32,7 @@
               <FlightStrip
                 v-else
                 :strip="item"
+                @update-strip="handleStripUpdate"
               />
             </template>
           </VueDraggable>
@@ -62,14 +63,27 @@ const props = defineProps({
   spacers: {
     type: Array,
     required: true
+  },
+  selectedDepRunway: {
+    type: String,
+    default: ''
+  },
+  selectedArrRunway: {
+    type: String,
+    default: ''
   }
 })
 
-const emit = defineEmits(['delete-strip', 'move-item', 'add-spacer', 'strips-reordered', 'spacers-reordered'])
+const emit = defineEmits(['delete-strip', 'move-item', 'add-spacer', 'strips-reordered', 'spacers-reordered', 'update-strip', 'update-spacer'])
 
 // Use spacers from props instead of local ref
 
 const allStrips = ref([])
+
+// Handle strip updates from FlightStrip component
+const handleStripUpdate = (updatedStrip) => {
+  emit('update-strip', updatedStrip)
+}
 const zoomLevel = ref(1.0)
 
 // Store previous positions for FLIP animation
@@ -220,8 +234,8 @@ defineExpose({
 })
 
 const updateSpacer = (spacerData) => {
-  // This would need to be implemented as a server call if we want to sync spacer updates
   console.log('Spacer update requested:', spacerData)
+  emit('update-spacer', spacerData)
 }
 
 const deleteSpacer = (spacerId) => {
@@ -235,6 +249,19 @@ const getDepartureCount = () => {
 
 const getArrivalCount = () => {
   return props.strips.filter(s => s.stripType === 'arrival').length
+}
+
+const getRunwayDisplay = () => {
+  const depRwy = props.selectedDepRunway || '--'
+  const arrRwy = props.selectedArrRunway || '--'
+  
+  if (depRwy === arrRwy) {
+    // Same runway, show once in white (same as RWY: label)
+    return `<span style="color: white; font-size: 0.9em; font-weight: 700;">${depRwy}</span>`
+  } else {
+    // Different runways, show DEP first (blue), then ARR (yellow)
+    return `<span style="color: #2a9af3; font-size: 0.9em; font-weight: 700;">${depRwy}</span><span style="color: white; font-weight: 700;">/</span><span style="color: #fdd835; font-size: 0.9em; font-weight: 700;">${arrRwy}</span>`
+  }
 }
 </script>
 
@@ -256,12 +283,12 @@ const getArrivalCount = () => {
 
 
 .airport-info-bar {
-  background: #1976D2;
+  background: #1e1e1e;
   padding: 8px 16px;
   color: white;
   font-weight: 600;
   font-size: 0.9em;
-  border-bottom: 1px solid #1976D2;
+  border-bottom: 1px solid #1e1e1e;
 }
 
 .airport-info {
@@ -271,6 +298,10 @@ const getArrivalCount = () => {
 }
 
 .runway-info {
+  font-weight: 700;
+}
+
+.runway-info :deep(span) {
   font-weight: 700;
 }
 
