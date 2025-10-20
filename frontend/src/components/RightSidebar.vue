@@ -137,7 +137,7 @@
           </template>
         </v-tooltip>
 
-        <v-tooltip text="Spacer" location="left">
+        <v-tooltip text="Bay Header" location="left">
           <template v-slot:activator="{ props }">
             <v-btn
               v-bind="props"

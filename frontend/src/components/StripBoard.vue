@@ -23,9 +23,9 @@
             class="draggable-area"
           >
             <template v-for="item in allStrips" :key="item.id">
-              <StripSpacer
+              <BayHeader
                 v-if="item.type === 'spacer'"
-                :spacer="item"
+                :bay-header="item"
                 @update="updateSpacer"
                 @delete="deleteSpacer"
               />
@@ -54,7 +54,7 @@
 import { ref, watch, computed, nextTick } from 'vue'
 import { VueDraggable } from 'vue-draggable-plus'
 import FlightStrip from './FlightStrip.vue'
-import StripSpacer from './StripSpacer.vue'
+import BayHeader from './BayHeader.vue'
 
 const props = defineProps({
   strips: {
@@ -108,11 +108,11 @@ const resetZoom = () => {
   zoomLevel.value = 1.0
 }
 
-// Combine strips and spacers
+// Combine strips and bay headers (spacers)
 watch([() => props.strips, () => props.spacers], ([newStrips, newSpacers]) => {
-  console.log('Watch triggered - strips:', newStrips.length, 'spacers:', newSpacers.length)
+  console.log('Watch triggered - strips:', newStrips.length, 'bay headers:', newSpacers.length)
   console.log('Strips orders:', newStrips.map(s => `${s.callsign}:${s.position?.order}`).join(', '))
-  console.log('Spacers orders:', newSpacers.map(s => `${s.name}:${s.order}`).join(', '))
+  console.log('Bay headers orders:', newSpacers.map(s => `${s.name}:${s.order}`).join(', '))
   
   // Skip FLIP animation if this is from a local drag
   if (isLocalDrag) {
@@ -144,7 +144,7 @@ watch([() => props.strips, () => props.spacers], ([newStrips, newSpacers]) => {
     ...newStrips.map(strip => ({ ...strip, type: 'strip' }))
   ]
   
-  // Sort by order - both strips and spacers now have consistent ordering from server
+  // Sort by order - both strips and bay headers now have consistent ordering from server
   combined.sort((a, b) => {
     const orderA = a.type === 'spacer' ? a.order : (a.position?.order ?? 999)
     const orderB = b.type === 'spacer' ? b.order : (b.position?.order ?? 999)
@@ -181,7 +181,7 @@ watch([() => props.strips, () => props.spacers], ([newStrips, newSpacers]) => {
   })
 }, { immediate: true, deep: true })
 
-// No need for this watch since spacers are now server-side
+// No need for this watch since bay headers are now server-side
 
 const onDragStart = () => {
   // Mark as local drag to skip FLIP animation
@@ -342,7 +342,7 @@ const getRunwayDisplay = () => {
   }
 }
 
-/* Prevent strips and spacers from breaking across columns */
+/* Prevent strips and bay headers from breaking across columns */
 .draggable-area > * {
   break-inside: avoid;
   page-break-inside: avoid;

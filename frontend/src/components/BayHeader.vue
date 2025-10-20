@@ -1,11 +1,11 @@
 <template>
   <div 
-    class="strip-spacer" 
-    :data-strip-id="spacer.id"
+    class="bay-header" 
+    :data-strip-id="bayHeader.id"
   >
-    <div class="spacer-content drag-handle" @dblclick="startEditing">
-      <div class="spacer-text-wrapper">
-        <span class="spacer-name" ref="spacerNameSpan">{{ spacer.name }}</span>
+    <div class="bay-content drag-handle" @dblclick="startEditing">
+      <div class="bay-text-wrapper">
+        <span class="bay-name" ref="bayNameSpan">{{ bayHeader.name }}</span>
       </div>
     </div>
   </div>
@@ -15,7 +15,7 @@
 import { ref, watch } from 'vue'
 
 const props = defineProps({
-  spacer: {
+  bayHeader: {
     type: Object,
     required: true
   }
@@ -25,10 +25,10 @@ const emit = defineEmits(['update', 'delete'])
 
 const isEditing = ref(false)
 const editData = ref({})
-const spacerNameSpan = ref(null)
+const bayNameSpan = ref(null)
 
-watch(() => props.spacer, (newSpacer) => {
-  editData.value = { ...newSpacer }
+watch(() => props.bayHeader, (newBayHeader) => {
+  editData.value = { ...newBayHeader }
 }, { immediate: true, deep: true })
 
 const startEditing = (event) => {
@@ -38,13 +38,13 @@ const startEditing = (event) => {
   isEditing.value = true
   
   // Create input overlay
-  const spacerElement = event.currentTarget.closest('.strip-spacer')
-  if (!spacerElement) return
+  const bayElement = event.currentTarget.closest('.bay-header')
+  if (!bayElement) return
   
   const input = document.createElement('input')
   input.type = 'text'
-  input.value = props.spacer.name
-  input.className = 'spacer-name-input'
+  input.value = props.bayHeader.name
+  input.className = 'bay-name-input'
   input.style.cssText = `
     position: absolute;
     top: 50%;
@@ -67,12 +67,12 @@ const startEditing = (event) => {
   `
   
   // Hide the span
-  const nameSpan = spacerElement.querySelector('.spacer-name')
+  const nameSpan = bayElement.querySelector('.bay-name')
   if (nameSpan) {
     nameSpan.style.visibility = 'hidden'
   }
   
-  spacerElement.appendChild(input)
+  bayElement.appendChild(input)
   input.focus()
   input.select()
   
@@ -81,7 +81,7 @@ const startEditing = (event) => {
     if (e.key === 'Enter') {
       const newName = input.value.trim()
       if (newName) {
-        emit('update', { ...props.spacer, name: newName })
+        emit('update', { ...props.bayHeader, name: newName })
       }
       cleanup()
     } else if (e.key === 'Escape') {
@@ -94,7 +94,7 @@ const startEditing = (event) => {
     setTimeout(() => {
       const newName = input.value.trim()
       if (newName) {
-        emit('update', { ...props.spacer, name: newName })
+        emit('update', { ...props.bayHeader, name: newName })
       }
       cleanup()
     }, 100)
@@ -111,7 +111,7 @@ const startEditing = (event) => {
 </script>
 
 <style scoped>
-.strip-spacer {
+.bay-header {
   background: #2d2d2d;
   margin-bottom: 6px;
   cursor: grab;
@@ -124,16 +124,16 @@ const startEditing = (event) => {
   width: 500px;
 }
 
-.strip-spacer:hover {
+.bay-header:hover {
   background: #353535;
 }
 
-.strip-spacer:active {
+.bay-header:active {
   cursor: grabbing;
 }
 
 
-.spacer-content {
+.bay-content {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,15 +145,15 @@ const startEditing = (event) => {
   transition: background 0.1s;
 }
 
-.spacer-content:hover {
+.bay-content:hover {
   background: #353535;
 }
 
-.spacer-content:active {
+.bay-content:active {
   cursor: grabbing;
 }
 
-.spacer-text-wrapper {
+.bay-text-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -161,7 +161,7 @@ const startEditing = (event) => {
   height: 100%;
 }
 
-.spacer-name {
+.bay-name {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 3px;
@@ -179,12 +179,12 @@ const startEditing = (event) => {
   cursor: grabbing;
 }
 
-.theme--dark .strip-spacer {
+.theme--dark .bay-header {
   background: #2d2d2d;
   border-color: #555;
 }
 
-.theme--dark .strip-spacer:hover {
+.theme--dark .bay-header:hover {
   background: #353535;
 }
 </style>

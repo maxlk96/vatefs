@@ -278,17 +278,17 @@
       </v-card>
     </v-dialog>
 
-    <!-- Add Spacer Dialog -->
+    <!-- Add Bay Header Dialog -->
     <v-dialog v-model="spacerDialog" max-width="500">
       <v-card>
         <v-card-title class="dialog-header-neutral">
-          <span class="text-h5">Create New Spacer</span>
+          <span class="text-h5">Create New Bay Header</span>
         </v-card-title>
         
         <v-card-text class="pt-6">
           <v-text-field
             v-model="newSpacerName"
-            label="Spacer Name *"
+            label="Bay Header Name *"
             variant="outlined"
             density="comfortable"
             placeholder="e.g., CTR, HOLDING, etc."
@@ -306,7 +306,7 @@
             Cancel
           </v-btn>
           <v-btn color="primary" variant="elevated" @click="createSpacer">
-            Create Spacer
+            Create Bay Header
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -557,10 +557,10 @@ const deleteSpacer = (spacerId) => {
 }
 
 const handleSpacerUpdate = (spacerData) => {
-  console.log('Updating spacer:', spacerData)
+  console.log('Updating bay header:', spacerData)
   socketService.updateSpacer(spacerData)
   
-  // Update local spacers immediately
+  // Update local bay headers immediately
   const index = spacers.value.findIndex(sp => sp.id === spacerData.id)
   if (index !== -1) {
     spacers.value = [
@@ -598,7 +598,7 @@ const handleStripsReordered = (reorderedStrips) => {
 }
 
 const handleSpacersReordered = (reorderedSpacers) => {
-  // Update local spacers with server ordering
+  // Update local bay headers with server ordering
   spacers.value = reorderedSpacers.slice() // Create a copy to avoid reference issues
 }
 
@@ -608,11 +608,11 @@ const handleAddSpacer = () => {
 
 const createSpacer = () => {
   if (!newSpacerName.value.trim()) {
-    alert('Please enter a spacer name')
+    alert('Please enter a bay header name')
     return
   }
   
-  // Send spacer creation to server
+  // Send bay header creation to server (using spacer API endpoint)
   socketService.createSpacer({
     name: newSpacerName.value.trim().toUpperCase(),
     order: spacers.value.length
@@ -659,7 +659,7 @@ const handleAirportSelected = async (data) => {
   if (isChangingAirport) {
     vatsimService.stopPolling()
     
-    // Clear local strips and spacers (server will send new ones for the new room)
+    // Clear local strips and bay headers (server will send new ones for the new room)
     strips.value = []
     spacers.value = []
   }
@@ -884,7 +884,7 @@ onMounted(async () => {
   })
   
   socketService.on('spacers-reordered', (reorderedSpacers) => {
-    console.log('Spacers reordered:', reorderedSpacers.length)
+    console.log('Bay headers reordered:', reorderedSpacers.length)
     handleSpacersReordered(reorderedSpacers)
   })
   

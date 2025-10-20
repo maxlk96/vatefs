@@ -10,10 +10,10 @@ VatEFS (VATSIM Electronic Flight Strip) is a modern web application for managing
 - 🌐 **VATSIM Integration** - Auto-import flight plans from VATSIM live data
 - ✈️ **Auto-Create Strips** - Automatically create strips when new departures file flight plans
 - 🔄 **Real-time Synchronization** - Changes sync instantly across all connected clients via WebSockets
-- 🎯 **Drag & Drop** - Intuitive drag-and-drop interface for strips and spacers
+- 🎯 **Drag & Drop** - Intuitive drag-and-drop interface for strips and bay headers
 - 🎨 **Clean VatPLS-inspired UI** - Professional, minimalist design similar to VatPLS
 - 🎨 **Color-Coded Strips** - Yellow borders for departures, blue for arrivals
-- 📌 **Movable Spacers** - Organize strips with draggable section dividers
+- 📌 **Movable Bay Headers** - Organize strips with draggable section dividers
 - 🌓 **Dark/Light Mode** - Toggle between dark and light themes
 - 📱 **Responsive Design** - Works seamlessly on desktop and tablet devices
 - 🇸🇪 **Swedish Airport Presets** - Quick access to ESGG, ESMS, ESNZ, ESNU
@@ -152,14 +152,14 @@ When creating a strip, select the appropriate type to apply the color coding.
 3. Release to drop
 4. The strip position will sync to all connected clients
 
-### Managing Spacers
+### Managing Bay Headers
 
-Spacers help organize your strips into sections. Default spacers include CTR, RUNWAY, TAXIWAY, and DEP:
+Bay headers help organize your strips into sections. Default bay headers include CTR, RUNWAY, TAXIWAY, and DEP:
 
-1. **Move a spacer**: Drag it to any position, just like a flight strip
-2. **Edit a spacer**: Click the pencil icon to rename it
-3. **Delete a spacer**: Click the trash icon to remove it
-4. **Add a spacer**: Click the **+** button in the top bar and select "New Spacer"
+1. **Move a bay header**: Drag it to any position, just like a flight strip
+2. **Edit a bay header**: Double-click to rename it
+3. **Delete a bay header**: Drag it to the trash zone on the right sidebar
+4. **Add a bay header**: Click the **+** button in the top bar and select "Bay Header"
 
 ### Quick Strip Creation
 
@@ -167,7 +167,7 @@ Use the **+** menu in the top bar for quick access:
 - **New DEP Strip** - Creates a departure strip (yellow border)
 - **New ARR Strip** - Creates an arrival strip (blue border)
 - **New General Strip** - Creates a neutral strip (gray border)
-- **New Spacer** - Creates a custom section divider
+- **Bay Header** - Creates a custom section divider
 
 ### Editing a Strip
 
