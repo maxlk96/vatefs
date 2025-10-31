@@ -211,6 +211,14 @@ const formattedStripData = computed(() => {
     data.diagonal_line_svg_arr = '<svg class="diagonal-line-arr" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; overflow: visible;"><line x1="0" y1="100%" x2="100%" y2="0" stroke="#1976d2" stroke-width="2"/></svg>'
   }
   
+  // Format WTC circle (red circle around WTC if not M)
+  data.wtc_circle_svg = ''
+  if (data.wake && data.wake.toUpperCase() !== 'M') {
+    // Create SVG circle around WTC badge, centered on the text
+    // The circle should be slightly larger than the text (approximately 14px diameter for 12px text)
+    data.wtc_circle_svg = '<svg class="wtc-circle-svg" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="7" stroke="#f44336" stroke-width="1.5" fill="none"/></svg>'
+  }
+  
   return data
 })
 

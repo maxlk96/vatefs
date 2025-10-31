@@ -10,7 +10,7 @@
         <span class="field-value field-right field-placeholder">&nbsp;</span>
         <div class="field-middle-group">
           <span class="field-value field-left">{{frul}}</span>
-          <span class="field-value">{{atyp}}<span class="wtc-badge">{{wake}}</span></span>
+          <span class="field-value">{{atyp}}<span class="wtc-wrapper"><span class="wtc-badge">{{wake}}</span>{{{wtc_circle_svg}}}</span></span>
         </div>
         <span class="field-value field-right">{{assr}}</span>
       </div>
@@ -368,11 +368,35 @@
   background: rgba(117, 117, 117, 0.05) !important;
 }
 
+.standard-layout.paper-strip .wtc-wrapper {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-left: 0px !important;
+  padding: 0 !important;
+  min-width: 16px !important;
+  height: 16px !important;
+}
+
 .standard-layout.paper-strip .wtc-badge {
-  font-size: 10px !important;
-  font-weight: bold !important;
-  margin-left: 2px !important;
+  font-size: 12px !important;
+  font-weight: normal !important;
   color: black !important;
+  position: relative !important;
+  z-index: 2 !important;
+  line-height: 1 !important;
+}
+
+.standard-layout.paper-strip .wtc-circle-svg {
+  position: absolute !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 16px !important;
+  height: 16px !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
 }
 
 .standard-layout.paper-strip .column-sid {
