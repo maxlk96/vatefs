@@ -122,6 +122,7 @@ const startEditing = (event) => {
   position: relative;
   height: 40px;
   width: 500px;
+  box-sizing: border-box; /* Ensure borders are included in width calculation */
 }
 
 .bay-header:hover {

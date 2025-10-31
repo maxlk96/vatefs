@@ -38,13 +38,20 @@ const customAtaValue = ref('')
 const isEditingStand = ref(false)
 const isEditingColumn1 = ref(false)
 const isEditingFreetext = ref(false)
+const isEditingPushback = ref(false)
 const isEditingCol3 = ref(false)
 const isEditingSid = ref(false)
 const isEditingNumeral = ref(false)
 const isEditingNumeral2 = ref(false)
+const isEditingTimeMinutes = ref(false)
+const isEditingCol6Freetext = ref(false)
+const isEditingAtaMinutes = ref(false)
 let ataClickTimer = null
 let numeralClickTimer = null
 let numeral2ClickTimer = null
+let timeMinutesClickTimer = null
+let pushbackClickTimer = null
+let ataRightClickTimer = null
 
 // Store refs to event handlers for cleanup
 const eventHandlers = ref(new Map())
@@ -143,6 +150,67 @@ const formattedStripData = computed(() => {
     data.symbol_svg = '<line x1="10" y1="0" x2="10" y2="20" stroke="#f44336" stroke-width="2"/><line x1="0" y1="20" x2="20" y2="20" stroke="#f44336" stroke-width="2"/>'
   }
   
+  // Format pushback indicator for departure strips
+  data.pushback_indicator = ''
+  if (data.pushbackArrow === 'right') {
+    data.pushback_indicator = '<span class="pushback-indicator">→</span>'
+  } else if (data.pushbackArrow === 'left') {
+    data.pushback_indicator = '<span class="pushback-indicator">←</span>'
+  }
+  
+  // Format pushback freetext (separate from arrows)
+  data.pushback_freetext = ''
+  if (data.pushbackFreetext && data.pushbackFreetext !== '') {
+    data.pushback_freetext = `<span class="pushback-freetext-value">${data.pushbackFreetext.substring(0, 3)}</span>`
+  }
+  
+  // Format blue dash for symbol cell
+  data.blue_dash_svg = ''
+  if (data.blueDash) {
+    data.blue_dash_svg = '-'
+  }
+  
+  // Format diagonal line for callsign box
+  data.diagonal_line_svg = ''
+  if (data.diagonalLine) {
+    // Create SVG line from bottom left to top right of the callsign box
+    data.diagonal_line_svg = '<svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; overflow: visible;"><line x1="0" y1="100%" x2="100%" y2="0" stroke="#1976d2" stroke-width="2"/></svg>'
+  }
+  
+  // Time minutes (just pass through)
+  data.time_minutes = data.timeMinutes || ''
+  
+  // Column 6 freetext (just pass through)
+  data.col6_freetext = data.col6Freetext || ''
+  
+  // Format ATA for arrival strips: split L indicator and minutes
+  data.ata_l_indicator = ''
+  data.ata_minutes = ''
+  if (data.ata) {
+    const ataMatch = data.ata.match(/^L(\d{2})$/)
+    if (ataMatch) {
+      data.ata_l_indicator = 'L'
+      data.ata_minutes = ataMatch[1]
+    } else if (data.ata === 'L') {
+      data.ata_l_indicator = 'L'
+      data.ata_minutes = ''
+    }
+  }
+  
+  // Format curved arrow for arrival strips (pointing left to right with upward sweep)
+  data.curved_arrow_svg = ''
+  if (data.curvedArrow) {
+    // Create curved arrow SVG (starts left, dips down slightly, then sweeps significantly upwards to right)
+    data.curved_arrow_svg = '<svg class="curved-arrow-svg" viewBox="0 0 100 60" xmlns="http://www.w3.org/2000/svg"><path d="M 10 25 Q 30 50, 50 45 T 90 15" stroke="#1976d2" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/><defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><polygon points="0 0, 10 3, 0 6" fill="#1976d2"/></marker></defs></svg>'
+  }
+  
+  // Format diagonal line for arrival strips (only if curved arrow is selected)
+  data.diagonal_line_svg_arr = ''
+  if (data.diagonalLineArr && data.curvedArrow) {
+    // Create SVG line from bottom left to top right of the callsign box
+    data.diagonal_line_svg_arr = '<svg class="diagonal-line-arr" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; overflow: visible;"><line x1="0" y1="100%" x2="100%" y2="0" stroke="#1976d2" stroke-width="2"/></svg>'
+  }
+  
   return data
 })
 
@@ -173,20 +241,78 @@ const setupClickHandlers = () => {
     const stripElement = document.querySelector(`[data-strip-id="${props.strip.id}"]`)
     if (!stripElement) return
     
-    // ATA field click handler for arrival strips
-    const ataCell = stripElement.querySelector('.ata-cell')
-    if (ataCell) {
-      ataCell.addEventListener('click', handleAtaClick)
-      ataCell.addEventListener('dblclick', handleAtaDoubleClick)
-      eventHandlers.value.set('ata-click', { element: ataCell, event: 'click', fn: handleAtaClick })
-      eventHandlers.value.set('ata-dblclick', { element: ataCell, event: 'dblclick', fn: handleAtaDoubleClick })
+    // ATA field click handlers for arrival strips (split into L and minutes)
+    if (getStripType() === 'arrival') {
+      const ataLeftCell = stripElement.querySelector('.ata-left-cell')
+      if (ataLeftCell) {
+        ataLeftCell.addEventListener('click', handleAtaLeftClick)
+        eventHandlers.value.set('ata-left-click', { element: ataLeftCell, event: 'click', fn: handleAtaLeftClick })
+      }
+      
+      const ataRightCell = stripElement.querySelector('.ata-right-cell')
+      if (ataRightCell) {
+        ataRightCell.addEventListener('click', handleAtaRightClick)
+        ataRightCell.addEventListener('dblclick', handleAtaRightDoubleClick)
+        eventHandlers.value.set('ata-right-click', { element: ataRightCell, event: 'click', fn: handleAtaRightClick })
+        eventHandlers.value.set('ata-right-dblclick', { element: ataRightCell, event: 'dblclick', fn: handleAtaRightDoubleClick })
+      }
+      
+      // Curved arrow click handler
+      const curvedArrowCell = stripElement.querySelector('.column3-bottom-curved-arrow')
+      if (curvedArrowCell) {
+        curvedArrowCell.addEventListener('click', handleCurvedArrowClick)
+        eventHandlers.value.set('curved-arrow-click', { element: curvedArrowCell, event: 'click', fn: handleCurvedArrowClick })
+      }
+      
+      // Callsign box click handler (for diagonal line, only if curved arrow is selected)
+      const callsignBoxArr = stripElement.querySelector('.callsign-column-arr')
+      if (callsignBoxArr) {
+        callsignBoxArr.addEventListener('click', handleCallsignBoxArrClick)
+        eventHandlers.value.set('callsign-box-arr-click', { element: callsignBoxArr, event: 'click', fn: handleCallsignBoxArrClick })
+      }
+    } else {
+      // Keep old ATA handler for non-arrival strips
+      const ataCell = stripElement.querySelector('.ata-cell')
+      if (ataCell) {
+        ataCell.addEventListener('click', handleAtaClick)
+        ataCell.addEventListener('dblclick', handleAtaDoubleClick)
+        eventHandlers.value.set('ata-click', { element: ataCell, event: 'click', fn: handleAtaClick })
+        eventHandlers.value.set('ata-dblclick', { element: ataCell, event: 'dblclick', fn: handleAtaDoubleClick })
+      }
     }
     
-    // Stand field click handler
-    const standCell = stripElement.querySelector('.stand-cell')
-    if (standCell) {
-      standCell.addEventListener('click', handleStandClick)
-      eventHandlers.value.set('stand-click', { element: standCell, event: 'click', fn: handleStandClick })
+    // Pushback field click handlers (departure strips only)
+    if (getStripType() === 'departure') {
+      const pushbackCell = stripElement.querySelector('.pushback-cell')
+      if (pushbackCell) {
+        pushbackCell.addEventListener('click', handlePushbackClick)
+        pushbackCell.addEventListener('dblclick', handlePushbackDoubleClick)
+        eventHandlers.value.set('pushback-click', { element: pushbackCell, event: 'click', fn: handlePushbackClick })
+        eventHandlers.value.set('pushback-dblclick', { element: pushbackCell, event: 'dblclick', fn: handlePushbackDoubleClick })
+      }
+      
+      // Stand field click handler (right part of stand box)
+      const standCell = stripElement.querySelector('.stand-cell-right')
+      if (standCell) {
+        standCell.addEventListener('click', handleStandClick)
+        eventHandlers.value.set('stand-click', { element: standCell, event: 'click', fn: handleStandClick })
+      }
+    } else {
+      // For non-departure strips, use original stand-cell
+      const standCell = stripElement.querySelector('.stand-cell')
+      if (standCell) {
+        standCell.addEventListener('click', handleStandClick)
+        eventHandlers.value.set('stand-click', { element: standCell, event: 'click', fn: handleStandClick })
+      }
+    }
+    
+    // Callsign box click handler (departure strips only)
+    if (getStripType() === 'departure') {
+      const callsignBox = stripElement.querySelector('.callsign-column')
+      if (callsignBox) {
+        callsignBox.addEventListener('click', handleCallsignBoxClick)
+        eventHandlers.value.set('callsign-box-click', { element: callsignBox, event: 'click', fn: handleCallsignBoxClick })
+      }
     }
     
     // Checkmark click handlers for departure strips
@@ -238,11 +364,29 @@ const setupClickHandlers = () => {
       eventHandlers.value.set('numeral-dblclick', { element: numeralCell, event: 'dblclick', fn: handleNumeralDoubleClick })
     }
     
-    // Symbol field click to toggle (general strips)
-    const symbolCell = stripElement.querySelector('.symbol-cell')
-    if (symbolCell) {
-      symbolCell.addEventListener('click', handleSymbolClick)
-      eventHandlers.value.set('symbol-click', { element: symbolCell, event: 'click', fn: handleSymbolClick })
+    // Symbol field click handlers
+    if (getStripType() === 'departure') {
+      // For departure strips: left and right click areas (merged into two parts)
+      const symbolLeftCell = stripElement.querySelector('.col2-left-blue')
+      if (symbolLeftCell) {
+        symbolLeftCell.addEventListener('click', handleSymbolLeftClick)
+        eventHandlers.value.set('symbol-left-click', { element: symbolLeftCell, event: 'click', fn: handleSymbolLeftClick })
+      }
+      
+      const symbolRightCell = stripElement.querySelector('.col2-right-blue')
+      if (symbolRightCell) {
+        symbolRightCell.addEventListener('click', handleSymbolRightClick)
+        symbolRightCell.addEventListener('dblclick', handleSymbolRightDoubleClick)
+        eventHandlers.value.set('symbol-right-click', { element: symbolRightCell, event: 'click', fn: handleSymbolRightClick })
+        eventHandlers.value.set('symbol-right-dblclick', { element: symbolRightCell, event: 'dblclick', fn: handleSymbolRightDoubleClick })
+      }
+    } else {
+      // For other strips: original symbol cell behavior
+      const symbolCell = stripElement.querySelector('.symbol-cell')
+      if (symbolCell) {
+        symbolCell.addEventListener('click', handleSymbolClick)
+        eventHandlers.value.set('symbol-click', { element: symbolCell, event: 'click', fn: handleSymbolClick })
+      }
     }
     
     // Numeral2 field click and double-click (departure strips)
@@ -252,6 +396,15 @@ const setupClickHandlers = () => {
       numeral2Cell.addEventListener('dblclick', handleNumeral2DoubleClick)
       eventHandlers.value.set('numeral2-click', { element: numeral2Cell, event: 'click', fn: handleNumeral2Click })
       eventHandlers.value.set('numeral2-dblclick', { element: numeral2Cell, event: 'dblclick', fn: handleNumeral2DoubleClick })
+    }
+    
+    // Column 6 freetext field click handler (departure strips only)
+    if (getStripType() === 'departure') {
+      const col6FreetextWrapper = stripElement.querySelector('.col6-freetext-wrapper')
+      if (col6FreetextWrapper) {
+        col6FreetextWrapper.addEventListener('click', handleCol6FreetextClick)
+        eventHandlers.value.set('col6-freetext-click', { element: col6FreetextWrapper, event: 'click', fn: handleCol6FreetextClick })
+      }
     }
   })
 }
@@ -411,6 +564,486 @@ const handleAtaDoubleClick = (event) => {
         isEditingAta.value = false
       }, 100)
     })
+  }
+}
+
+// Arrival strip handlers
+const handleAtaLeftClick = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  // Toggle L indicator
+  const currentAta = props.strip.ata || ''
+  let newAta = ''
+  
+  if (currentAta === 'L' || currentAta.startsWith('L')) {
+    // Clear L (and minutes if present)
+    newAta = ''
+  } else {
+    // Set L only (no minutes yet)
+    newAta = 'L'
+  }
+  
+  const updatedStrip = {
+    ...props.strip,
+    ata: newAta
+  }
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handleAtaRightClick = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  // Don't handle if in edit mode
+  if (isEditingAtaMinutes.value) return
+  
+  // Clear any existing timer
+  if (ataRightClickTimer) {
+    clearTimeout(ataRightClickTimer)
+    ataRightClickTimer = null
+  }
+  
+  // Delay to allow double-click to take precedence
+  ataRightClickTimer = setTimeout(() => {
+    // Only insert time if L is selected
+    const currentAta = props.strip.ata || ''
+    if (!currentAta || !currentAta.startsWith('L')) {
+      return // L must be selected first
+    }
+    
+    // Add current minutes
+    const now = new Date()
+    const minutes = now.getMinutes().toString().padStart(2, '0')
+    const newAta = `L${minutes}`
+    
+    const updatedStrip = {
+      ...props.strip,
+      ata: newAta
+    }
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    
+    ataRightClickTimer = null
+  }, 250) // 250ms delay to detect double-click
+}
+
+const handleAtaRightDoubleClick = (event) => {
+  event.preventDefault()
+  event.stopPropagation()
+  
+  // Clear the single-click timer
+  if (ataRightClickTimer) {
+    clearTimeout(ataRightClickTimer)
+    ataRightClickTimer = null
+  }
+  
+  // Enter edit mode
+  isEditingAtaMinutes.value = true
+  
+  // Show input field
+  const ataRightCell = event.currentTarget
+  const ataMValueSpan = ataRightCell.querySelector('.ata-m-value')
+  
+  if (ataMValueSpan) {
+    const currentAta = props.strip.ata || ''
+    const currentMinutes = currentAta.match(/^L(\d{2})$/) ? currentAta.match(/^L(\d{2})$/)[1] : ''
+    
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 2
+    input.placeholder = 'xx'
+    input.value = currentMinutes
+    input.className = 'ata-minutes-input'
+    input.style.cssText = `
+      width: 30px;
+      text-align: center;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+      color: #1976d2;
+      font-size: 16px;
+      font-weight: 600;
+      border: 1px solid #1976d2;
+      background: white;
+      outline: none;
+      padding: 2px;
+    `
+    
+    // Replace span with input
+    ataMValueSpan.style.display = 'none'
+    ataRightCell.appendChild(input)
+    input.focus()
+    input.select()
+    
+    // Real-time validation to only allow digits
+    input.addEventListener('input', (e) => {
+      let value = input.value
+      
+      // Only allow digits, max 2 digits
+      if (!/^\d{0,2}$/.test(value)) {
+        input.value = value.substring(0, value.length - 1)
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        let value = input.value.trim()
+        
+        if (value.length > 0 && /^\d{1,2}$/.test(value)) {
+          // Pad with leading zero if single digit
+          const paddedValue = value.padStart(2, '0')
+          
+          // Check if L is present, if not add it
+          const currentAta = props.strip.ata || ''
+          let newAta = ''
+          
+          if (currentAta.startsWith('L')) {
+            newAta = `L${paddedValue}`
+          } else {
+            // No L present, add it automatically
+            newAta = `L${paddedValue}`
+          }
+          
+          // Update the strip
+          const updatedStrip = {
+            ...props.strip,
+            ata: newAta
+          }
+          socketService.updateStrip(updatedStrip)
+          emit('update-strip', updatedStrip)
+        }
+        
+        // Clean up
+        input.remove()
+        ataMValueSpan.style.display = ''
+        isEditingAtaMinutes.value = false
+      } else if (e.key === 'Escape') {
+        // Cancel edit
+        input.remove()
+        ataMValueSpan.style.display = ''
+        isEditingAtaMinutes.value = false
+      }
+    })
+    
+    // Handle blur (click outside)
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        input.remove()
+        ataMValueSpan.style.display = ''
+        isEditingAtaMinutes.value = false
+      }, 100)
+    })
+  }
+}
+
+const handleCurvedArrowClick = (event) => {
+  event.stopPropagation()
+  
+  // Toggle curved arrow
+  const currentCurvedArrow = props.strip.curvedArrow || false
+  const newCurvedArrow = !currentCurvedArrow
+  
+  const updatedStrip = {
+    ...props.strip,
+    curvedArrow: newCurvedArrow
+  }
+  
+  // If curved arrow is cleared, also clear diagonal line
+  if (!newCurvedArrow && props.strip.diagonalLineArr) {
+    updatedStrip.diagonalLineArr = false
+  }
+  
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handleCallsignBoxArrClick = (event) => {
+  event.stopPropagation()
+  
+  // Only allow diagonal line if curved arrow is selected
+  if (!props.strip.curvedArrow) {
+    return
+  }
+  
+  // Toggle diagonal line
+  const currentDiagonalLine = props.strip.diagonalLineArr || false
+  const newDiagonalLine = !currentDiagonalLine
+  
+  const updatedStrip = {
+    ...props.strip,
+    diagonalLineArr: newDiagonalLine
+  }
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handlePushbackClick = (event) => {
+  event.stopPropagation()
+  
+  // Don't handle if in edit mode
+  if (isEditingPushback.value) return
+  
+  // Clear any existing timer
+  if (pushbackClickTimer) {
+    clearTimeout(pushbackClickTimer)
+    pushbackClickTimer = null
+  }
+  
+  // Delay to allow double-click to take precedence
+  pushbackClickTimer = setTimeout(() => {
+    // Single click: cycle through arrow right → arrow left → clear
+    const currentArrow = props.strip.pushbackArrow || ''
+    let newArrow = ''
+    
+    if (!currentArrow || currentArrow === '') {
+      newArrow = 'right' // Arrow to the right
+    } else if (currentArrow === 'right') {
+      newArrow = 'left' // Arrow to the left
+    } else if (currentArrow === 'left') {
+      newArrow = '' // Clear
+    }
+    
+    const updatedStrip = {
+      ...props.strip,
+      pushbackArrow: newArrow
+    }
+    
+    // If arrow is cleared and freetext is present, also clear freetext
+    if (newArrow === '' && props.strip.pushbackFreetext) {
+      updatedStrip.pushbackFreetext = ''
+    }
+    
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    
+    pushbackClickTimer = null
+  }, 250) // 250ms delay to detect double-click
+}
+
+const handlePushbackDoubleClick = (event) => {
+  event.stopPropagation()
+  
+  // Clear the single-click timer
+  if (pushbackClickTimer) {
+    clearTimeout(pushbackClickTimer)
+    pushbackClickTimer = null
+  }
+  
+  if (isEditingPushback.value) return
+  
+  isEditingPushback.value = true
+  
+  const pushbackCell = event.currentTarget
+  const currentText = props.strip.pushbackFreetext || ''
+  
+  // Create input element
+  const input = document.createElement('input')
+  input.type = 'text'
+  input.maxLength = 3
+  input.placeholder = 'txt'
+  input.value = currentText
+  input.className = 'pushback-input'
+  input.style.cssText = `
+    width: 100%;
+    text-align: center;
+    font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+    color: #1976d2;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #1976d2;
+    background: white;
+    outline: none;
+    padding: 2px;
+    text-transform: uppercase;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+  `
+  
+  // Clear existing content and add input
+  const freetextValue = pushbackCell.querySelector('.pushback-freetext-value')
+  if (freetextValue) {
+    freetextValue.style.display = 'none'
+  }
+  
+  // Make pushback cell relative for absolute positioning
+  pushbackCell.style.position = 'relative'
+  pushbackCell.appendChild(input)
+  input.focus()
+  input.select()
+  
+  // Handle Enter key
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const value = input.value.trim().toUpperCase().substring(0, 3)
+      const updatedStrip = {
+        ...props.strip,
+        pushbackFreetext: value || ''
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+      
+      // Clean up
+      input.remove()
+      if (freetextValue) {
+        freetextValue.style.display = ''
+      }
+      pushbackCell.style.position = ''
+      isEditingPushback.value = false
+    } else if (e.key === 'Escape') {
+      // Cancel edit
+      input.remove()
+      if (freetextValue) {
+        freetextValue.style.display = ''
+      }
+      pushbackCell.style.position = ''
+      isEditingPushback.value = false
+    }
+  })
+  
+  // Handle blur
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      const value = input.value.trim().toUpperCase().substring(0, 3)
+      const updatedStrip = {
+        ...props.strip,
+        pushbackFreetext: value || ''
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+      
+      input.remove()
+      if (freetextValue) {
+        freetextValue.style.display = ''
+      }
+      pushbackCell.style.position = ''
+      isEditingPushback.value = false
+    }, 100)
+  })
+}
+
+const handleCol6FreetextClick = (event) => {
+  event.stopPropagation()
+  
+  if (isEditingCol6Freetext.value) return
+  
+  isEditingCol6Freetext.value = true
+  
+  const col6Wrapper = event.currentTarget
+  const col6ValueSpan = col6Wrapper.querySelector('.col6-freetext-value')
+  
+  if (col6ValueSpan) {
+    const currentValue = props.strip.col6Freetext || ''
+    
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 2
+    input.placeholder = 'L#'
+    input.value = currentValue
+    input.className = 'col6-freetext-input'
+    input.style.cssText = `
+      width: 100%;
+      text-align: center;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+      color: #1976d2;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1px solid #1976d2;
+      background: white;
+      outline: none;
+      padding: 2px;
+      text-transform: uppercase;
+    `
+    
+    // Replace span with input
+    col6ValueSpan.style.display = 'none'
+    col6Wrapper.appendChild(input)
+    input.focus()
+    input.select()
+    
+    // Real-time validation - only allow one letter followed by one digit
+    input.addEventListener('input', () => {
+      let value = input.value.toUpperCase()
+      
+      // Remove any invalid characters
+      value = value.replace(/[^A-Z0-9]/g, '')
+      
+      // If we have a letter, only allow digits after
+      if (value.length > 0 && /[A-Z]/.test(value[0])) {
+        if (value.length > 1) {
+          // Keep only letter + digit
+          const letter = value[0]
+          const digit = value[1]
+          if (/[0-9]/.test(digit)) {
+            input.value = letter + digit
+          } else {
+            // If second char is not digit, keep only letter
+            input.value = letter
+          }
+        } else {
+          input.value = value
+        }
+      } else if (value.length > 0 && /[0-9]/.test(value[0])) {
+        // If starts with digit, clear it (must start with letter)
+        input.value = ''
+      } else if (value.length === 0) {
+        input.value = ''
+      } else {
+        // If first char is not letter or digit, clear
+        input.value = ''
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        let value = input.value.trim().toUpperCase()
+        
+        // Validate format: one letter followed by one number
+        if (value.length === 2 && /[A-Z]/.test(value[0]) && /[0-9]/.test(value[1])) {
+          saveCol6Freetext(value)
+        } else if (value.length === 0) {
+          saveCol6Freetext('')
+        }
+        cleanup()
+      } else if (e.key === 'Escape') {
+        cleanup()
+      }
+    })
+    
+    // Handle blur
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        let value = input.value.trim().toUpperCase()
+        
+        // Validate format: one letter followed by one number
+        if (value.length === 2 && /[A-Z]/.test(value[0]) && /[0-9]/.test(value[1])) {
+          saveCol6Freetext(value)
+        } else if (value.length === 0) {
+          saveCol6Freetext('')
+        }
+        cleanup()
+      }, 100)
+    })
+    
+    const saveCol6Freetext = (value) => {
+      const updatedStrip = {
+        ...props.strip,
+        col6Freetext: value
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+    }
+    
+    const cleanup = () => {
+      input.remove()
+      col6ValueSpan.style.display = ''
+      isEditingCol6Freetext.value = false
+    }
   }
 }
 
@@ -1082,10 +1715,188 @@ const handleNumeralDoubleClick = (event) => {
   }
 }
 
-const handleSymbolClick = (event) => {
+const handleSymbolLeftClick = (event) => {
   event.stopPropagation()
   
-  // Toggle between empty → vertical → T → empty
+  // Click on left part: create "-" in blue color
+  // If both dash and minute are filled, clear both
+  if (props.strip.blueDash && props.strip.timeMinutes) {
+    const updatedStrip = {
+      ...props.strip,
+      blueDash: false,
+      timeMinutes: ''
+    }
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    return
+  }
+  
+  // Otherwise, toggle the dash
+  const updatedStrip = {
+    ...props.strip,
+    blueDash: !props.strip.blueDash
+  }
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handleSymbolRightClick = (event) => {
+  event.stopPropagation()
+  
+  // Don't handle if in edit mode
+  if (isEditingTimeMinutes.value) return
+  
+  // Clear any existing timer
+  if (timeMinutesClickTimer) {
+    clearTimeout(timeMinutesClickTimer)
+    timeMinutesClickTimer = null
+  }
+  
+  // Delay to allow double-click to take precedence
+  timeMinutesClickTimer = setTimeout(() => {
+    // Single click: create "-" to the left (if not already present) and add present time in minutes
+    const now = new Date()
+    const minutes = now.getMinutes().toString().padStart(2, '0')
+    
+    const updatedStrip = {
+      ...props.strip,
+      timeMinutes: minutes
+    }
+    
+    // If blueDash not present, add it
+    if (!props.strip.blueDash) {
+      updatedStrip.blueDash = true
+    }
+    
+    socketService.updateStrip(updatedStrip)
+    emit('update-strip', updatedStrip)
+    
+    timeMinutesClickTimer = null
+  }, 250) // 250ms delay to detect double-click
+}
+
+const handleSymbolRightDoubleClick = (event) => {
+  event.stopPropagation()
+  
+  // Clear the single-click timer
+  if (timeMinutesClickTimer) {
+    clearTimeout(timeMinutesClickTimer)
+    timeMinutesClickTimer = null
+  }
+  
+  if (isEditingTimeMinutes.value) return
+  
+  isEditingTimeMinutes.value = true
+  
+  const timeCell = event.currentTarget
+  const timeValueSpan = timeCell.querySelector('.symbol-time-value')
+  
+  if (timeValueSpan) {
+    const currentTime = props.strip.timeMinutes || ''
+    
+    // Create input element
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.maxLength = 2
+    input.placeholder = 'mm'
+    input.value = currentTime
+    input.className = 'time-input'
+    input.style.cssText = `
+      width: 30px;
+      text-align: center;
+      font-family: 'Segoe Print', 'Comic Sans MS', cursive;
+      color: #1976d2;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid #1976d2;
+      background: white;
+      outline: none;
+      padding: 2px;
+    `
+    
+    // Replace span with input
+    timeValueSpan.style.display = 'none'
+    timeCell.appendChild(input)
+    input.focus()
+    input.select()
+    
+    // Real-time validation - only allow digits, max 2
+    input.addEventListener('input', () => {
+      const value = input.value
+      if (!/^\d{0,2}$/.test(value)) {
+        input.value = value.substring(0, value.length - 1)
+      }
+    })
+    
+    // Handle Enter key
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        let value = input.value.trim()
+        if (value.length > 0) {
+          // Add leading zero if single digit
+          if (value.length === 1) {
+            value = '0' + value
+          }
+          // Ensure max 2 digits
+          if (/^\d{1,2}$/.test(value)) {
+            saveTimeMinutes(value)
+          }
+        } else {
+          saveTimeMinutes('')
+        }
+        cleanup()
+      } else if (e.key === 'Escape') {
+        cleanup()
+      }
+    })
+    
+    // Handle blur
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        let value = input.value.trim()
+        if (value.length > 0) {
+          // Add leading zero if single digit
+          if (value.length === 1) {
+            value = '0' + value
+          }
+          // Ensure max 2 digits
+          if (/^\d{1,2}$/.test(value)) {
+            saveTimeMinutes(value)
+          }
+        } else {
+          saveTimeMinutes('')
+        }
+        cleanup()
+      }, 100)
+    })
+    
+    const saveTimeMinutes = (value) => {
+      const updatedStrip = {
+        ...props.strip,
+        timeMinutes: value
+      }
+      socketService.updateStrip(updatedStrip)
+      emit('update-strip', updatedStrip)
+    }
+    
+    const cleanup = () => {
+      input.remove()
+      timeValueSpan.style.display = ''
+      isEditingTimeMinutes.value = false
+    }
+  }
+}
+
+const handleSymbolClick = (event) => {
+  // This handler is for the middle content area - keep original behavior for now
+  // But for DEP strips, we want different behavior
+  if (getStripType() === 'departure') {
+    return // Don't handle clicks on the middle for departure strips
+  }
+  
+  event.stopPropagation()
+  
+  // Toggle between empty → vertical → T → empty (for non-departure strips)
   const currentSymbol = props.strip.symbol || ''
   let newSymbol = ''
   
@@ -1100,6 +1911,18 @@ const handleSymbolClick = (event) => {
   const updatedStrip = {
     ...props.strip,
     symbol: newSymbol
+  }
+  socketService.updateStrip(updatedStrip)
+  emit('update-strip', updatedStrip)
+}
+
+const handleCallsignBoxClick = (event) => {
+  event.stopPropagation()
+  
+  // Single click: toggle diagonal line
+  const updatedStrip = {
+    ...props.strip,
+    diagonalLine: !props.strip.diagonalLine
   }
   socketService.updateStrip(updatedStrip)
   emit('update-strip', updatedStrip)
@@ -1250,6 +2073,9 @@ const getStripType = () => {
   if (props.strip.sid) {
     return 'departure'
   }
+  if (props.strip.star) {
+    return 'arrival'
+  }
   // Default to neutral
   return 'neutral'
 }
@@ -1263,6 +2089,7 @@ const getStripType = () => {
   position: relative;
   transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
   width: 500px;
+  box-sizing: border-box; /* Ensure borders are included in width calculation */
 }
 
 .theme--dark .flight-strip {

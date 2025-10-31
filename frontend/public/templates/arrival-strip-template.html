@@ -4,8 +4,11 @@
 <div class="strip-layout paper-strip arrival-layout">
   <div class="strip-container">
     <!-- Column 1: No rows, just positioned text -->
-    <div class="column column-full column-no-rows edit-column" data-field="column1">
-      <span class="field-value callsign-large">{{callsign}}</span>
+    <div class="column column-full column-no-rows edit-column callsign-column-arr" data-field="callsign-box-arr" style="position: relative;">
+      <span class="field-value callsign-large">
+        {{callsign}}
+      </span>
+      {{{diagonal_line_svg_arr}}}
       <div class="field-spacing-group">
         <span class="field-value field-right field-placeholder">&nbsp;</span>
         <div class="field-middle-group">
@@ -21,14 +24,22 @@
       <div class="cell cell-top">
         <span class="field-value">{{eta}}</span>
       </div>
-      <div class="cell cell-bottom ata-cell" data-field="ata">
-        <span class="field-value ata-value">{{ata}}</span>
+      <div class="cell cell-bottom column-2-bottom-split">
+        <div class="cell ata-left-cell" data-field="ata-l">
+          <span class="ata-l-value">{{{ata_l_indicator}}}</span>
+        </div>
+        <div class="cell ata-right-cell" data-field="ata-m">
+          <span class="ata-m-value">{{ata_minutes}}</span>
+        </div>
       </div>
     </div>
     
     <!-- Column 3: Full height with STAR at bottom -->
     <div class="column column-full column-sid">
       <span class="field-value sid-large">{{star || ''}}</span>
+      <div class="column3-bottom-curved-arrow" data-field="curved-arrow">
+        {{{curved_arrow_svg}}}
+      </div>
     </div>
     
     <!-- Column 4: Split -->
@@ -238,23 +249,59 @@
   display: none !important;
 }
 
-.arrival-layout.paper-strip .ata-cell {
+.arrival-layout.paper-strip .column-2-bottom-split {
+  display: flex !important;
+  flex-direction: row !important;
+  padding: 0 !important;
+  border-bottom: none !important;
+  gap: 0 !important;
+}
+
+.arrival-layout.paper-strip .column-2-bottom-split > .cell {
+  flex: 1 !important;
+  border-bottom: none !important;
+  border-right: none !important;
+  padding: 2px 4px !important;
+}
+
+.arrival-layout.paper-strip .ata-left-cell {
   cursor: pointer !important;
-  background: transparent !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   transition: background 0.2s !important;
 }
 
-.arrival-layout.paper-strip .ata-cell:hover {
+.arrival-layout.paper-strip .ata-left-cell:hover {
   background: rgba(33, 150, 243, 0.05) !important;
 }
 
-.arrival-layout.paper-strip .ata-value {
+.arrival-layout.paper-strip .ata-l-value {
   font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
   color: #1976d2 !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   letter-spacing: 0.5px !important;
-  display: inline-block !important;
+}
+
+.arrival-layout.paper-strip .ata-right-cell {
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.2s !important;
+}
+
+.arrival-layout.paper-strip .ata-right-cell:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.arrival-layout.paper-strip .ata-m-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.5px !important;
 }
 
 .arrival-layout.paper-strip .column-sid {
@@ -321,6 +368,47 @@
   left: 2px !important;
   font-size: 11px !important;
   text-align: left !important;
+}
+
+.arrival-layout.paper-strip .callsign-column-arr {
+  position: relative !important;
+}
+
+.arrival-layout.paper-strip .diagonal-line-arr {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.arrival-layout.paper-strip .column-sid {
+  position: relative !important;
+}
+
+.arrival-layout.paper-strip .column3-bottom-curved-arrow {
+  position: absolute !important;
+  bottom: 2px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  cursor: pointer !important;
+  width: 30px !important;
+  height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.2s !important;
+}
+
+.arrival-layout.paper-strip .column3-bottom-curved-arrow:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.arrival-layout.paper-strip .curved-arrow-svg {
+  width: 100% !important;
+  height: 100% !important;
 }
 </style>
 

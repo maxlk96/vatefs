@@ -1,49 +1,85 @@
 <template>
-  <v-app>
+  <v-app :class="{ 'has-horizontal-scroll': hasHorizontalScrollbar }">
     <v-app-bar color="#1e1e1e" density="compact">
-      <!-- Left side - Zoom controls -->
-      <div class="d-flex align-center ga-1 ml-2">
-        <v-btn 
-          icon 
-          size="small" 
-          variant="text"
-          @click="decreaseZoom"
-          :disabled="zoomLevel <= 0.5"
+      <!-- Left side - Roles/Runway Selector -->
+      <div class="d-flex align-center ga-3 ml-2">
+        <v-btn
+          color="grey-darken-1"
+          variant="outlined"
+          class="small-top-btn"
+          @click="reopenAirportSelector"
         >
-          <v-icon size="small">mdi-minus</v-icon>
+          Roles
         </v-btn>
-        <v-btn 
-          icon 
-          size="small" 
-          variant="text"
-          @click="increaseZoom"
-          :disabled="zoomLevel >= 1.5"
-        >
-          <v-icon size="small">mdi-plus</v-icon>
-        </v-btn>
-        <v-btn 
-          icon 
-          size="small" 
-          variant="text"
-          @click="resetZoom"
-        >
-          <v-icon size="small">mdi-restore</v-icon>
-        </v-btn>
+
+        <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              color="grey-darken-1"
+              variant="outlined"
+              class="small-top-btn"
+              :disabled="!selectedAirport || availableRunways.length === 0"
+            >
+              {{ selectedDepRunway ? `RWY ${selectedDepRunway}` : 'RWY IN USE' }}
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item
+              v-for="runway in availableRunways"
+              :key="runway"
+              @click="selectedDepRunway = runway"
+            >
+              <v-list-item-title>RWY {{ runway }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
       </div>
 
       <v-spacer></v-spacer>
 
-      <!-- Airport Name in Center -->
+      <!-- Center - Airport name -->
       <div class="airport-name-center">
-        <span class="airport-name-text">{{ selectedAirport || 'NO AIRPORT SELECTED' }}</span>
+        <span class="airport-name-text">{{ selectedAirport || 'NO AIRPORT' }}</span>
       </div>
 
       <v-spacer></v-spacer>
 
-      <!-- Right side controls - ZULU Clock -->
-      <div class="d-flex align-center">
-        <div class="zulu-clock">
-          <span class="zulu-time">{{ zuluTime }}</span>
+      <!-- Right side - Traffic counts, statuses -->
+      <div class="d-flex align-center ga-4 mr-2 top-right-info">
+        <div class="airport-and-traffic d-flex align-center ga-3">
+          <span class="traffic-counters">
+            DEP {{ departureCount }} ARR {{ arrivalCount }}
+          </span>
+        </div>
+        <div class="d-flex align-center ga-2">
+        <v-tooltip text="Server Connection" location="bottom">
+          <template v-slot:activator="{ props }">
+            <div 
+              v-bind="props"
+              class="status-indicator-top"
+              :class="{ 'status-connected': connectionStatus === 'connected' }"
+            >
+              <v-icon size="small">mdi-server-network</v-icon>
+            </div>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="VATSIM Network" location="bottom">
+          <template v-slot:activator="{ props }">
+            <div 
+              v-bind="props"
+              class="status-indicator-top"
+              :class="{ 'status-connected': vatsimConnected }"
+            >
+              <img 
+                src="https://vatsim.dev/img/logo.png" 
+                alt="VATSIM" 
+                class="vatsim-logo-top"
+              />
+            </div>
+          </template>
+        </v-tooltip>
         </div>
       </div>
     </v-app-bar>
@@ -64,23 +100,22 @@
         @strips-reordered="handleStripsReordered"
         @spacers-reordered="handleSpacersReordered"
       />
-      
-      <!-- Right Sidebar -->
-      <RightSidebar
-        :selected-airport="selectedAirport"
-        :connection-status="connectionStatus"
-        :vatsim-connected="vatsimConnected"
-        :selected-dep-runway="selectedDepRunway"
-        :selected-arr-runway="selectedArrRunway"
-        :available-runways="availableRunways"
-        @create-strip="openStripDialog"
-        @create-spacer="openSpacerDialog"
-        @delete-item="handleDeleteItem"
-        @change-airport="reopenAirportSelector"
-        @update-dep-runway="selectedDepRunway = $event"
-        @update-arr-runway="selectedArrRunway = $event"
-      />
     </v-main>
+    
+    <!-- Bottom Bar - Sticky at bottom, outside v-main -->
+    <BottomBar
+      :class="{ 'has-scrollbar': hasHorizontalScrollbar }"
+      :selected-dep-runway="selectedDepRunway"
+      :selected-arr-runway="selectedArrRunway"
+      :available-runways="availableRunways"
+      :zulu-time="zuluTime"
+      @create-strip="openStripDialog"
+      @create-spacer="openSpacerDialog"
+      @delete-item="handleDeleteItem"
+      @update-dep-runway="selectedDepRunway = $event"
+      @update-arr-runway="selectedArrRunway = $event"
+      @reset-fpb="handleResetFPB"
+    />
 
     <!-- Airport Selector Dialog -->
     <AirportSelector
@@ -315,16 +350,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import StripBoard from './components/StripBoard.vue'
 import AirportSelector from './components/AirportSelector.vue'
-import RightSidebar from './components/RightSidebar.vue'
+import BottomBar from './components/BottomBar.vue'
 import { socketService } from './services/socket'
 import { vatsimService } from './services/vatsim'
 import { aircraftDataService } from './services/aircraftData'
 import { sidStarDataService } from './services/sidstarData'
 const dialog = ref(false)
+const hasHorizontalScrollbar = ref(false)
 const spacerDialog = ref(false)
+let scrollbarCheckInterval = null
 const showAirportSelector = ref(true)
 const strips = ref([])
 const spacers = ref([])
@@ -334,7 +371,6 @@ const newSpacerName = ref('')
 const stripBoardRef = ref(null)
 const selectedAirport = ref('')
 const vatsimConnected = ref(false)
-const zoomLevel = ref(1.0)
 let callsignDebounceTimer = null
 const fetchingVatsimData = ref(false)
 const vatsimDataLoaded = ref(false)
@@ -342,6 +378,8 @@ const selectedDepRunway = ref('')
 const selectedArrRunway = ref('')
 const availableRunways = ref([])
 const zuluTime = ref('')
+const departureCount = computed(() => strips.value.filter(s => s.stripType === 'departure').length)
+const arrivalCount = computed(() => strips.value.filter(s => s.stripType === 'arrival').length)
 
 const newStrip = ref({
   callsign: '',
@@ -626,31 +664,28 @@ const reopenAirportSelector = () => {
   showAirportSelector.value = true
 }
 
-// Zoom functions
-const increaseZoom = () => {
-  if (zoomLevel.value < 1.5) {
-    zoomLevel.value = Math.min(1.5, zoomLevel.value + 0.1)
-    updateStripBoardZoom()
+const handleResetFPB = async () => {
+  // Reset runway selections to defaults
+  if (availableRunways.value.length > 0) {
+    selectedDepRunway.value = availableRunways.value[0]
+    selectedArrRunway.value = availableRunways.value[0]
+  } else {
+    selectedDepRunway.value = ''
+    selectedArrRunway.value = ''
+  }
+  
+  // Request backend to reset the FPB
+  socketService.resetFPB()
+  
+  // Wait for server to reset and send initial data, then import flights if airport is selected
+  if (selectedAirport.value) {
+    // Wait a bit for server to send initial strips/spacers
+    setTimeout(async () => {
+      await importExistingFlights()
+    }, 500)
   }
 }
 
-const decreaseZoom = () => {
-  if (zoomLevel.value > 0.5) {
-    zoomLevel.value = Math.max(0.5, zoomLevel.value - 0.1)
-    updateStripBoardZoom()
-  }
-}
-
-const resetZoom = () => {
-  zoomLevel.value = 1.0
-  updateStripBoardZoom()
-}
-
-const updateStripBoardZoom = () => {
-  if (stripBoardRef.value) {
-    stripBoardRef.value.setZoomLevel(zoomLevel.value)
-  }
-}
 
 const handleAirportSelected = async (data) => {
   const isChangingAirport = selectedAirport.value && selectedAirport.value !== data.airport
@@ -837,7 +872,31 @@ watch(dialog, (isOpen, wasOpen) => {
   dialogWasOpen = isOpen
 })
 
+const checkScrollbar = () => {
+  const body = document.body
+  const html = document.documentElement
+  // Check if content overflows viewport
+  const hasScroll = body.scrollWidth > window.innerWidth || html.scrollWidth > window.innerWidth
+  hasHorizontalScrollbar.value = hasScroll
+  // Force scrollbar to appear by ensuring overflow is set correctly
+  if (hasScroll) {
+    body.style.overflowX = 'auto'
+    html.style.overflowX = 'auto'
+  } else {
+    body.style.overflowX = 'hidden'
+    html.style.overflowX = 'hidden'
+  }
+}
+
 onMounted(async () => {
+  // Check for horizontal scrollbar periodically
+  const scrollbarCheckInterval = setInterval(() => {
+    checkScrollbar()
+  }, 100)
+  
+  // Watch for window resize
+  window.addEventListener('resize', checkScrollbar)
+  
   // Load aircraft and SID/STAR data
   await Promise.all([
     aircraftDataService.loadAircraftData(),
@@ -903,6 +962,10 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  if (scrollbarCheckInterval) {
+    clearInterval(scrollbarCheckInterval)
+  }
+  window.removeEventListener('resize', checkScrollbar)
   socketService.disconnect()
   vatsimService.stopPolling()
 })
@@ -926,25 +989,105 @@ textarea,
   -moz-user-select: text;
   -ms-user-select: text;
 }
+
+/* Prevent vertical scrolling, allow horizontal */
+html {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  position: relative;
+}
+
+/* Style browser-level horizontal scrollbar - only show when needed */
+body::-webkit-scrollbar {
+  height: 20px;
+  display: block;
+}
+
+body::-webkit-scrollbar:horizontal {
+  display: block !important;
+}
+
+body::-webkit-scrollbar-track {
+  background: #555 !important;
+  border-top: none;
+}
+
+body::-webkit-scrollbar-thumb {
+  background: #aaa !important;
+  border-radius: 0;
+  border: none;
+  min-width: 60px;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+  background: #ccc !important;
+}
+
+body::-webkit-scrollbar-thumb:active {
+  background: #fff !important;
+}
+
+body {
+  scrollbar-width: auto;
+  scrollbar-color: #aaa #555;
+}
 </style>
 
 <style scoped>
 .main-with-sidebar {
   display: flex;
-  height: calc(100vh - 48px);
+  flex-direction: column;
+  height: calc(100vh - 48px - 56px); /* Subtract app bar (48px) and bottom bar (56px) */
+  overflow-x: visible; /* Let window handle scrolling */
+  overflow-y: hidden;
+  position: relative;
+  width: max-content !important; /* Allow content to extend beyond viewport */
+  min-width: 100vw; /* But at least fill viewport */
+  max-width: none !important;
 }
 
-.main-with-sidebar > :first-child {
-  flex: 1;
-  overflow: hidden;
+/* When scrollbar is present, adjust main content height */
+.has-horizontal-scroll .main-with-sidebar {
+  height: calc(100vh - 48px - 56px - 20px); /* Subtract scrollbar height when present */
 }
 
+/* Ensure v-app allows horizontal overflow */
+:deep(.v-application) {
+  overflow-x: visible !important;
+  overflow-y: hidden !important;
+  width: 100%;
+  min-width: 100%;
+  height: 100vh;
+  max-width: none !important;
+}
+
+:deep(.v-application__wrap) {
+  overflow-x: visible !important;
+  overflow-y: hidden !important;
+  width: 100%;
+  min-width: 100%;
+  height: 100%;
+  max-width: none !important;
+}
+
+/* Center placement for airport name */
 .airport-name-center {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  display: flex;
-  align-items: center;
 }
 
 .airport-name-text {
@@ -953,6 +1096,11 @@ textarea,
   font-weight: 700;
   letter-spacing: 2px;
   color: white;
+}
+.top-right-info .traffic-counters {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #bdbdbd;
 }
 
 .zulu-clock {
@@ -969,6 +1117,52 @@ textarea,
   font-weight: 700;
   color: white;
   letter-spacing: 2px;
+}
+
+/* Top bar airport button */
+.airport-btn-top {
+  font-size: 0.75em !important;
+  padding: 8px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  white-space: nowrap;
+  color: #000 !important;
+}
+
+.airport-text-top {
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000 !important;
+}
+
+/* Top bar status indicators */
+.status-indicator-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background-color: #d32f2f;
+  transition: background-color 0.3s ease;
+}
+
+.status-indicator-top.status-connected {
+  background-color: #4caf50;
+}
+
+.vatsim-logo-top {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+/* Compact left buttons */
+.small-top-btn {
+  min-width: 72px !important;
+  height: 28px !important;
+  padding: 0 10px !important;
 }
 
 /* Dialog header colors */

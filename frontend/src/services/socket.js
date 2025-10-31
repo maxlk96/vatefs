@@ -101,6 +101,12 @@ class SocketService {
       this.socket.emit('select-airport', icao)
     }
   }
+
+  resetFPB() {
+    if (this.socket) {
+      this.socket.emit('reset-fpb')
+    }
+  }
 }
 
 export const socketService = new SocketService()

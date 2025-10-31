@@ -4,8 +4,11 @@
 <div class="strip-layout paper-strip departure-layout">
   <div class="strip-container">
     <!-- Column 1: No rows, just positioned text -->
-    <div class="column column-full column-no-rows">
-      <span class="field-value callsign-large">{{callsign}}</span>
+    <div class="column column-full column-no-rows edit-column callsign-column" data-field="callsign-box" style="position: relative;">
+      <span class="field-value callsign-large">
+        {{callsign}}
+      </span>
+      {{{diagonal_line_svg}}}
       <div class="field-spacing-group">
         <span class="field-value field-right">{{tas}}</span>
         <div class="field-middle-group">
@@ -21,17 +24,12 @@
       <div class="cell cell-top">
         <span class="field-value">{{eobt}}</span>
       </div>
-      <div class="cell cell-bottom col2-bottom-container">
-        <div class="col2-left numeral-cell" data-field="numeral">
-          <span class="field-value numeral-value">{{numeral}}</span>
+      <div class="cell cell-bottom col2-bottom-container-blue">
+        <div class="col2-left-blue" data-field="symbol-left">
+          <span class="blue-dash">{{{blue_dash_svg}}}</span>
         </div>
-        <div class="col2-middle symbol-cell" data-field="symbol">
-          <svg class="symbol-svg" viewBox="0 0 20 20" width="20" height="20">
-            {{{symbol_svg}}}
-          </svg>
-        </div>
-        <div class="col2-right numeral2-cell" data-field="numeral2">
-          <span class="field-value numeral2-value">{{numeral2}}</span>
+        <div class="col2-right-blue" data-field="symbol-right">
+          <span class="symbol-time-value">{{time_minutes}}</span>
         </div>
       </div>
     </div>
@@ -66,18 +64,33 @@
       <div class="cell cell-top cell-with-right-border">
         <span class="field-value">{{rwy}}</span>
       </div>
-      <div class="cell cell-bottom route-cell">
-        <span class="field-value route-text">{{route || ''}}</span>
+      <div class="cell cell-bottom col6-route-freetext-container">
+        <div class="col6-route-wrapper">
+          <span class="field-value route-text">{{route || ''}}</span>
+        </div>
+        <div class="col6-freetext-wrapper" data-field="col6-freetext">
+          <span class="field-value col6-freetext-value">{{col6_freetext || ''}}</span>
+        </div>
       </div>
     </div>
     
-    <!-- Column 7: Split with Stand and RFL -->
+    <!-- Column 7: Full height with Pushback, Stand and RFL -->
     <div class="column column-full column-no-border">
-      <div class="cell cell-top cell-no-bottom-border stand-cell" data-field="stand">
-        <span class="field-value stand-value">{{stand}}</span>
-      </div>
-      <div class="cell cell-bottom rfl-cell">
-        <span class="field-value rfl-value">{{rfl_formatted || ''}}</span>
+      <div class="stand-cell-full-container">
+        <div class="stand-cell-top-row">
+          <div class="pushback-container">
+            <div class="pushback-cell" data-field="pushback">
+              <div class="pushback-freetext-value">{{{pushback_freetext}}}</div>
+              <div class="pushback-indicator-wrapper">{{{pushback_indicator}}}</div>
+            </div>
+          </div>
+          <div class="stand-cell-right" data-field="stand">
+            <span class="field-value stand-value">{{stand}}</span>
+          </div>
+        </div>
+        <div class="rfl-cell-full">
+          <span class="field-value rfl-value">{{rfl_formatted || ''}}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -139,6 +152,14 @@
   text-align: center !important;
 }
 
+.departure-layout.paper-strip .cell-middle {
+  border-bottom: none !important;
+}
+
+.departure-layout.paper-strip .cell-bottom {
+  border-bottom: none !important;
+}
+
 .departure-layout.paper-strip .cell:last-child {
   border-bottom: none !important;
 }
@@ -149,6 +170,10 @@
 }
 
 .departure-layout.paper-strip .cell-top {
+  flex: 1 !important;
+}
+
+.departure-layout.paper-strip .cell-middle {
   flex: 1 !important;
 }
 
@@ -269,12 +294,46 @@
   text-transform: uppercase !important;
 }
 
-.departure-layout.paper-strip .route-cell {
-  align-items: center !important;
-  justify-content: center !important;
-  text-align: center !important;
+.departure-layout.paper-strip .col6-route-freetext-container {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
   padding: 2px 4px !important;
   position: relative !important;
+  min-height: 0 !important;
+}
+
+.departure-layout.paper-strip .col6-route-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  position: relative !important;
+}
+
+.departure-layout.paper-strip .col6-freetext-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  position: relative !important;
+  min-height: 20px !important;
+}
+
+.departure-layout.paper-strip .col6-freetext-wrapper:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.departure-layout.paper-strip .col6-freetext-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  transform: translateY(7px) !important;
 }
 
 .departure-layout.paper-strip .route-text {
@@ -294,6 +353,10 @@
 
 .departure-layout.paper-strip .cell-no-bottom-border {
   border-bottom: none !important;
+}
+
+.departure-layout.paper-strip .column-no-border {
+  border-right: none !important;
 }
 
 .departure-layout.paper-strip .column-no-border .cell {
@@ -340,18 +403,41 @@
   display: inline-block !important;
 }
 
-.departure-layout.paper-strip .col2-middle {
-  flex: 1 !important;
+.departure-layout.paper-strip .col2-bottom-container-blue {
   display: flex !important;
   align-items: center !important;
-  justify-content: center !important;
+  justify-content: space-between !important;
+  padding: 2px !important;
+}
+
+.departure-layout.paper-strip .col2-left-blue {
+  flex: 1 !important;
   cursor: pointer !important;
   transition: background 0.1s !important;
   min-height: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
 }
 
-.departure-layout.paper-strip .col2-middle:hover {
-  background: rgba(244, 67, 54, 0.05) !important;
+.departure-layout.paper-strip .col2-left-blue:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.departure-layout.paper-strip .col2-right-blue {
+  flex: 1 !important;
+  cursor: pointer !important;
+  transition: background 0.1s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-height: 20px !important;
+  position: relative !important;
+}
+
+.departure-layout.paper-strip .col2-right-blue:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
 }
 
 .departure-layout.paper-strip .symbol-svg {
@@ -399,16 +485,114 @@
   display: inline-block !important;
 }
 
-.departure-layout.paper-strip .stand-cell {
+.departure-layout.paper-strip .stand-cell-full-container {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  width: 100% !important;
+  border: none !important;
+}
+
+.departure-layout.paper-strip .stand-cell-top-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  flex: 0 0 auto !important;
+  padding: 2px !important;
+  border: none !important;
+  width: 100% !important;
+  min-height: 30px !important;
+}
+
+.departure-layout.paper-strip .pushback-container {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-width: 0 !important;
+  border: none !important;
+}
+
+.departure-layout.paper-strip .pushback-cell {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   cursor: pointer !important;
   transition: background 0.2s !important;
-  overflow: visible !important;
-  align-items: center !important;
+  min-height: 30px !important;
+  border: none !important;
+  position: relative !important;
+}
+
+.departure-layout.paper-strip .pushback-cell:hover {
+  background: rgba(33, 150, 243, 0.05) !important;
+}
+
+.departure-layout.paper-strip .pushback-freetext-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  flex: 1 !important;
+  display: flex !important;
+  align-items: flex-end !important;
   justify-content: center !important;
 }
 
-.departure-layout.paper-strip .stand-cell:hover {
+.departure-layout.paper-strip .pushback-indicator-wrapper {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  min-height: 10px !important;
+  max-height: 10px !important;
+  transform: translateY(-10px) !important;
+}
+
+.departure-layout.paper-strip .pushback-indicator {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  color: #1976d2 !important;
+}
+
+.departure-layout.paper-strip .pushback-freetext {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #000 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+}
+
+.departure-layout.paper-strip .stand-cell-right {
+  flex: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background 0.2s !important;
+  overflow: visible !important;
+  border: none !important;
+  min-height: 30px !important;
+  min-width: 0 !important;
+}
+
+.departure-layout.paper-strip .stand-cell-right:hover {
   background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.departure-layout.paper-strip .rfl-cell-full {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 !important;
+  padding: 2px 4px !important;
+  border: none !important;
+  position: relative !important;
+  z-index: 5 !important;
+  background: transparent !important;
 }
 
 .departure-layout.paper-strip .stand-value {
@@ -421,6 +605,42 @@
   display: inline-block !important;
   white-space: nowrap !important;
   overflow: visible !important;
+}
+
+.departure-layout.paper-strip .callsign-column {
+  cursor: pointer !important;
+  position: relative !important;
+}
+
+.departure-layout.paper-strip .callsign-column:hover {
+  background: rgba(33, 150, 243, 0.03) !important;
+}
+
+.departure-layout.paper-strip .diagonal-line {
+  position: absolute !important;
+  left: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 2px !important;
+  background: #1976d2 !important;
+  transform-origin: bottom left !important;
+  transform: rotate(-45deg) !important;
+  z-index: 10 !important;
+}
+
+.departure-layout.paper-strip .blue-dash {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+.departure-layout.paper-strip .symbol-time-value {
+  font-family: 'Segoe Print', 'Comic Sans MS', cursive !important;
+  color: #1976d2 !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
 }
 
 .departure-layout.paper-strip .strip-divider {
